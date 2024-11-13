@@ -18,7 +18,7 @@ import pymysql.cursors
 connection = pymysql.connect(host='localhost',
                              user='root',
                              password='root',
-                             database='retaildb',
+                             database='test',
                              charset='utf8mb4',
                              cursorclass=pymysql.cursors.DictCursor)
 
@@ -27,4 +27,12 @@ with connection:
         sql = "SELECT * FROM User"
         cursor.execute(sql)
         result = cursor.fetchall()
+        print(result)
+connection.ping()
+with connection:
+    with connection.cursor() as cursor:
+        sql = """INSERT INTO user (email, name, pass) VALUES (%s, %s, %s)"""
+        cursor.execute(sql, ('lucas@gmail.com', 'lucas', 'password'))
+        result = cursor.fetchall()
+        connection.commit()
         print(result)

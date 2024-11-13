@@ -1,13 +1,19 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from .controller import Controller
-import os
 import pymysql
 from flask_login import LoginManager
+import pymysql.cursors
 
 db = SQLAlchemy()
 DB_NAME = "test"
 controller = Controller(db)
+connection = pymysql.connect(host='localhost',
+                             user='root',
+                             password='root',
+                             database='test',
+                             charset='utf8mb4',
+                             cursorclass=pymysql.cursors.DictCursor)
 
 def create_app():
     app = Flask(__name__)
