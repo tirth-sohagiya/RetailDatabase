@@ -24,7 +24,7 @@ def logout():
     return "<p>Logout</p>"
 
 @auth.route('/create_account', methods=['GET', "POST"])
-def create_account():
+def create_account():   
     if request.method == 'POST':
         email = request.form.get('email')
         name = request.form.get('name')
@@ -43,13 +43,8 @@ def create_account():
         elif len(password2) < 7:
             flash('Password must be at least 7 characters', category='error')
         else:
+            # create_user is a sql insert query, written in queries.py
+            # need to create handling for if a user email already exists
             create_user(email=email, name=name, pass_hash=generate_password_hash(password1, method='pbkdf2:sha256'))
-            #print(check)
-            #new_user = User(email=email, name=name, password=generate_password_hash(password1, method='pbkdf2:sha256'))
-            #password=generate_password_hash(password1, method='pbkdf2:sha256')
-            #controller.db.session.add(new_user)
-            #controller.db.commit()
-            #login_user(new_user, remember=True)
-            #flash('Account created!', category='success')
             return redirect(url_for('views.home'))
     return render_template("create_account.html")

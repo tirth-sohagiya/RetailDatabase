@@ -14,14 +14,16 @@ def get_password(email):
 
 def create_user(email, name, pass_hash):
     sql = """INSERT INTO user (email, name, pass_hash) VALUES (%s, %s, %s)"""
-    """conn = pymysql.connect(host='localhost',
-                             user='root',
-                             password='root',
-                             database='test',
-                             charset='utf8mb4',
-                             cursorclass=pymysql.cursors.DictCursor)"""
+    # pinging connection with db, was getting some errors without this
     conn.ping()
     with conn.cursor() as cursor:         
         cursor.execute(sql, (email, name, pass_hash))
         conn.commit()
+
+def select_products(category, num):
+    sql = """SELECT pname, price, description, img_path FROM product WHERE category = %s ORDER BY popularity LIMIT %s"""
+    with conn.cursor() as cursor:         
+        cursor.execute(sql, (category, num))
+        results = cursor.fetchall()
+    return results
 
