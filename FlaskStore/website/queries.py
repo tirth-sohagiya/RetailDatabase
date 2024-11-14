@@ -10,11 +10,8 @@ def get_password(email):
     with conn.cursor() as cursor:         
         cursor.execute(sql, (email))
         results = cursor.fetchall()
-        print(results)
-        print(results[0]['pass_hash'])
     return results[0]['pass_hash']
 
-# will be attempted if 
 def create_user(email, name, pass_hash):
     sql = """INSERT INTO user (email, name, pass_hash) VALUES (%s, %s, %s)"""
     """conn = pymysql.connect(host='localhost',
