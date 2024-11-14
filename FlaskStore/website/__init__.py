@@ -16,7 +16,7 @@ connection = pymysql.connect(host='localhost',
                              cursorclass=pymysql.cursors.DictCursor)
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder='C:\\Users\\Lucas\\Documents\\GitHub\\RetailDatabase\\FlaskStore\\website\\static')
     app.config['SECRET_KEY'] = 'imgoingtoseppuku'
     app.config['SQLALCHEMY_DATABASE_URI'] =f'mysql+pymysql://root:root@localhost/{DB_NAME}'
     db.init_app(app)
