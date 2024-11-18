@@ -1,50 +1,94 @@
 {% extends "base.html" %}
-<title>{% block title %}Create Account{% endblock %}</title>
+{% block title %}Create Account{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
 
 {% block content %}
-<form method="POST">
-    <h3 align="center">Create Account</h3>
-    <div class="form-group">
-        <label for="email">Email Address</label>
-        <input
-            type="email"
-            class="form-control"
-            id="email"
-            name="email"
-            placeholder="Enter email"
-        />
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-5">
+                    <h2 class="text-center mb-4">Create Account</h2>
+                    
+                    <form method="POST">
+                        <div class="mb-4">
+                            <div class="form-floating">
+                                <input type="email" 
+                                       class="form-control" 
+                                       id="email" 
+                                       name="email" 
+                                       placeholder="name@example.com"
+                                       required>
+                                <label for="email">Email address</label>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-floating">
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="name" 
+                                       name="name" 
+                                       placeholder="Your name"
+                                       required>
+                                <label for="name">Full Name</label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="form-floating">
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="password1" 
+                                       name="password1" 
+                                       placeholder="Password"
+                                       required>
+                                <label for="password1">Password</label>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-floating">
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="password2" 
+                                       name="password2" 
+                                       placeholder="Confirm password"
+                                       required>
+                                <label for="password2">Confirm Password</label>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                Create Account
+                            </button>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <p class="text-muted">
+                                Already have an account? 
+                                <a href="{{ url_for('auth.login') }}" class="text-decoration-none">Sign in</a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show mt-3" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
     </div>
-    <div class="form-group">
-        <label for="name">Name</label>
-        <input
-            type="text"
-            class="form-control"
-            id="name"
-            name="name"
-            placeholder="Enter name"
-        />
-    </div>
-    <div class="form-group">
-        <label for="password1">Password</label>
-        <input
-            type="password"
-            class="form-control"
-            id="password1"
-            name="password1"
-            placeholder="Enter password"
-        />
-    </div>
-    <div class="form-group">
-        <label for="password2">Password</label>
-        <input
-            type="password"
-            class="form-control"
-            id="password2"
-            name="password2"
-            placeholder="Enter password"
-        />
-    </div>
-    <br />
-    <button type="submit" class="btn btn-primary">Submit</button>
-</form>
+</div>
 {% endblock %}

@@ -1,45 +1,38 @@
 {% extends "base.html" %}
 
-<title>{% block title %}Products{% endblock %}</title>
+{% block title %}Products{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/products.css') }}">
+{% endblock %}
 
 {% block content %}
-<style>
-    .card {
-        height: 100%;
-        margin-bottom: 20px;
-        transition: transform 0.2s;
-    }
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    .card-img-top {
-        height: 200px;
-        object-fit: cover;
-    }
-    .card-body {
-        display: flex;
-        flex-direction: column;
-    }
-    .card-price {
-        color: #2c3e50;
-        font-weight: bold;
-        margin: 10px 0;
-    }
-    .btn-primary {
-        margin-top: auto;
-    }
-</style>
+<div class="search-container">
+    <div class="container">
+        <div class="search-box">
+            <div class="input-group">
+                <input type="text" 
+                       class="form-control" 
+                       id="searchInput" 
+                       placeholder="Search products..."
+                       aria-label="Search products">
+                <button class="btn btn-primary" type="button" onclick="searchProducts()">
+                    <i class="bi bi-search"></i> Search
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
-<div class="container py-4">
+<div class="container products-grid">
     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
         {% for product in products %}
-        <div class="col">
+        <div class="col product-item">
             <div class="card">
                 <img src="{{ product.img_path }}" class="card-img-top" alt="{{ product.name }}">
                 <div class="card-body">
                     <h5 class="card-title">{{ product.name }}</h5>
-                    <h4 class="card-price">${{ product.price }}</h4>
+                    <h4 class="card-price">${{ "%.2f"|format(product.price) }}</h4>
                     <p class="card-text">{{ product.description }}</p>
                     <button onclick="addToCart({{ product.pid }})" class="btn btn-primary">Add To Cart</button>
                 </div>

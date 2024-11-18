@@ -1,0 +1,67 @@
+/* Search container styles */
+.search-container {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    margin-top: 1rem;
+    padding: 1.5rem 0;
+}
+
+.search-box {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.input-group {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.input-group .form-control,
+.input-group .btn {
+    height: 48px;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.input-group .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1.5rem;
+}
+
+/* Product card styles */
+.card {
+    height: 100%;
+    margin-bottom: 20px;
+    transition: transform 0.2s;
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.card-img-top {
+    height: 200px;
+    object-fit: cover;
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
+}
+
+.card-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.card-price {
+    color: #2c3e50;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.products-grid {
+    padding-top: 2rem;
+}

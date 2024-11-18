@@ -1,0 +1,48 @@
+/* Cart page styles */
+.card {
+    border: none;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.img-container {
+    width: 100%;
+    height: 100%;
+    padding: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+}
+
+.img-container img {
+    width: 100px;
+    object-fit: contain;
+}
+
+.input-group-sm {
+    width: 130px;
+}
+
+.card-price {
+    color: #2c3e50;
+    font-weight: bold;
+}
+
+.text-muted {
+    font-size: 0.9rem;
+}
+
+/* Cart total section */
+.cart-total {
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+
+/* Empty cart message */
+.empty-cart {
+    text-align: center;
+    padding: 3rem 0;
+}

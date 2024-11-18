@@ -1,19 +1,17 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from .controller import Controller
 import pymysql
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
 import pymysql.cursors
 
 db = SQLAlchemy()
 DB_NAME = "test"
-controller = Controller(db)
-connection = pymysql.connect(host='localhost',
-                             user='root',
-                             password='root',
-                             database='test',
-                             charset='utf8mb4',
-                             cursorclass=pymysql.cursors.DictCursor)
+# connection = pymysql.connect(host='localhost',
+#                              user='root',
+#                              password='root',
+#                              database='test',
+#                              charset='utf8mb4',
+#                              cursorclass=pymysql.cursors.DictCursor)
 login_manager = LoginManager()
                              
 def create_app():
@@ -29,6 +27,23 @@ def create_app():
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
 
+    with app.app_context():
+        db.create_all()
+
+    login_manager.login_view = 'auth.login'
+    @login_manager.user_loader
+    def load_user(id):
+        return User.query.get(int(id))
+
     from .models import User
+
+    @app.context_processor
+    def inject_cart_count():
+        from .queries import get_cart_count
+        if current_user.is_authenticated:
+            count = get_cart_count(current_user.id)
+        else:
+            count = get_cart_count(None)
+        return dict(cart_count=count)
 
     return app
