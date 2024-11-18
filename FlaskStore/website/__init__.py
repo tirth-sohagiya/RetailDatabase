@@ -14,12 +14,14 @@ connection = pymysql.connect(host='localhost',
                              database='test',
                              charset='utf8mb4',
                              cursorclass=pymysql.cursors.DictCursor)
-
+login_manager = LoginManager()
+                             
 def create_app():
     app = Flask(__name__, static_folder='C:\\Users\\Lucas\\Documents\\GitHub\\RetailDatabase\\FlaskStore\\website\\static')
-    app.config['SECRET_KEY'] = 'imgoingtoseppuku'
+    app.config['SECRET_KEY'] = 'verysecurekey'
     app.config['SQLALCHEMY_DATABASE_URI'] =f'mysql+pymysql://root:root@localhost/{DB_NAME}'
     db.init_app(app)
+    login_manager.init_app(app)
 
     from .views import views
     from .auth import auth
@@ -28,13 +30,5 @@ def create_app():
     app.register_blueprint(auth, url_prefix='/')
 
     from .models import User
-    
-    #login_manager = LoginManager()
-    #login_manager.login_view = 'auth login'
-    #login_manager.init_app(app)
-
-    #@login_manager.user_loader
-    #def load_user(id):
-    #    return User.query.get(int(id))
 
     return app

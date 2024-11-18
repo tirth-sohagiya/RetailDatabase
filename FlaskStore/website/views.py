@@ -1,5 +1,6 @@
-from flask import Blueprint, render_template, url_for
-from .queries import select_products
+from flask import Blueprint, render_template, request, flash, jsonify, url_for
+from .queries import select_products, add_to_cart, get_cart_count, get_cart_items
+from flask_login import login_required, current_user
 
 views = Blueprint('views', __name__)
 
@@ -8,23 +9,33 @@ def home():
     return render_template("home.html")
 
 @views.route('/products')
-def products():
-    result = select_products('laptop', 1)
+def product_route():
+    result = select_products('laptop', 8)
+    for prod in result:
+        prod['img_path'] = url_for('static', filename=prod['img_path'])
     print(result)
     #image=url_for('static', filename='laptop.jpg' )
-    prod = format_sql(result, 1)
-    return render_template("products.html", **prod)
+    return render_template("products.html", products=result)
 
-def format_sql(result, num_products):
-    prod = {}
-    for i in range(num_products):
-        idx = str(i)
-        prod['pname' + idx] = result[i]['pname']
-        prod['price' + idx] = result[i]['price']
-        prod['description' + idx] = result[i]['description']
-        prod['img_path' + idx] = url_for('static', filename=result[i]['img_path'])
-    print(prod['img_path0'])
-    return prod
+@views.route('/add-to-cart', methods=['POST'])
+@login_required
+def add_to_cart_route():
+    data = request.get_json()
+    pid = data.get('pid')
+    quantity = data.get('quantity', 1)
+    
+    if not pid:
+        return jsonify({'error': 'Product ID is required'}), 400
+    
+    try:
+        add_to_cart(current_user.id, pid, quantity)
+        cart_count = get_cart_count(current_user.id)
+        return jsonify({'success': True, 'cart_count': cart_count})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @views.route('/cart')
+@login_required
 def cart():
-    return render_template("cart.html")
+    cart_items = get_cart_items(current_user.id)
+    return render_template("cart.html", cart_items=cart_items)
