@@ -15,7 +15,7 @@ DB_NAME = "flasktest"
 login_manager = LoginManager()
                              
 def create_app():
-    app = Flask(__name__, static_folder='C:\\Users\\Lucas\\Documents\\GitHub\\RetailDatabase\\FlaskStore\\website\\static')
+    app = Flask(__name__)
     app.config['SECRET_KEY'] = 'verysecurekey'
     app.config['SQLALCHEMY_DATABASE_URI'] =f'mysql+pymysql://admin:password@aws.cjwc228ggyr7.us-west-1.rds.amazonaws.com:3306/{DB_NAME}'
     db.init_app(app)
