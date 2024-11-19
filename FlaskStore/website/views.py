@@ -23,8 +23,7 @@ def cart():
         uid = current_user.id
     else:
         uid = None
-    cart_items = get_cart_items(uid)
-    return render_template("cart.html", cart_items=cart_items)
+    return render_template("cart.html", cart_items=get_cart_items(uid))
 
 @views.route('/add-to-cart', methods=['POST'])
 def add_to_cart_route():
