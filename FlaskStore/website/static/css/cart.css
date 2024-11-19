@@ -1,8 +1,9 @@
 /* Cart page styles */
 .card {
-    border: none;
+    border-radius: 1rem;
     margin-bottom: 1rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    overflow: hidden;
 }
 
 .img-container {
@@ -12,13 +13,26 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #f8f9fa;
+
 }
 
-.img-container img {
-    width: 100px;
-    object-fit: contain;
+.img-container img.img-fluid.card {
+    border: none !important;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    overflow: hidden;
+    /*border-radius: 8px !important;*/
 }
+
+
+.img-container img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px !important;
+    -webkit-border-radius: 8px !important;
+    -moz-border-radius: 8px !important;
+} 
 
 .input-group-sm {
     width: 130px;
