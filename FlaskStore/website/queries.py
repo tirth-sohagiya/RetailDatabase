@@ -18,7 +18,13 @@ def select_products(category, num):
 
 def get_session_id():
     if 'cart_session_id' not in session:
-        session['cart_session_id'] = str(uuid.uuid4())
+        new_session_id = str(uuid.uuid4())
+        # Find a unique session ID
+        while true:
+            if not Cart.query.filter_by(session_id=new_session_id).first():
+                break
+            new_session_id = str(uuid.uuid4())
+        session['cart_session_id'] = new_session_id
     return session['cart_session_id']
 
 def add_to_cart(uid, pid, quantity=1):
@@ -69,3 +75,29 @@ def get_cart_items(uid=None):
         query = query.filter(Cart.session_id == session_id, Cart.uid == None)
 
     return query.all()
+
+def transfer_cart_signup(uid):
+    """ This function transfers a guest cart to a user when they sign up for an account """
+    # Update the cart items with the new user ID
+    db.session.query(Cart).filter_by(session_id=get_session_id()).update({"uid": uid})
+    db.session.commit()
+
+# clear all items in the current cart
+def clear_cart(uid=None):
+    if uid:
+         db.session.query(Cart).filter_by(uid = uid).delete()
+         db.session.commit()
+    else:
+        db.session.query(Cart).filter_by(session_id=get_session_id()).delete()
+        db.session.commit()
+
+def delete_from_cart(pid, uid=None):
+    print("In delete_from_cart. uid:", uid, "pid:", pid)
+    if uid:
+        print("In uid")
+        db.session.query(Cart).filter_by(uid=uid, pid=pid).delete()
+        db.session.commit()
+    else:
+        print("In pid")
+        db.session.query(Cart).filter_by(session_id=get_session_id(), pid=pid).delete()
+        db.session.commit()

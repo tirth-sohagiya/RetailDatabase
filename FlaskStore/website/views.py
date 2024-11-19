@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, jsonify, url_for
-from .queries import select_products, add_to_cart, get_cart_count, get_cart_items
+from .queries import select_products, add_to_cart, get_cart_count, get_cart_items, delete_from_cart
 from flask_login import login_required, current_user
 
 views = Blueprint('views', __name__)
@@ -16,6 +16,15 @@ def product_route():
     print(result)
     #image=url_for('static', filename='laptop.jpg' )
     return render_template("products.html", products=result)
+
+@views.route('/cart')
+def cart():
+    if current_user.is_authenticated:
+        uid = current_user.id
+    else:
+        uid = None
+    cart_items = get_cart_items(uid)
+    return render_template("cart.html", cart_items=cart_items)
 
 @views.route('/add-to-cart', methods=['POST'])
 def add_to_cart_route():
@@ -38,11 +47,20 @@ def add_to_cart_route():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@views.route('/cart')
-def cart():
-    if current_user.is_authenticated:
-        uid = current_user.id
-    else:
-        uid = None
-    cart_items = get_cart_items(uid)
-    return render_template("cart.html", cart_items=cart_items)
+@views.route('/remove-from-cart', methods=['POST'])
+def remove_from_cart():
+    data = request.get_json()
+    pid = data.get('pid')
+
+    if not pid:
+        return jsonify({'error': 'Product ID is required'}), 400
+
+    try:
+        if current_user.is_authenticated:
+            delete_from_cart(pid, current_user.id)
+        else:
+            delete_from_cart(pid)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    return jsonify({'success': True})
+

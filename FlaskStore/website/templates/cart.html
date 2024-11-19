@@ -8,10 +8,10 @@
     <h2 class="mb-4">Shopping Cart</h2>
     
     {% if cart_items %}
-        <div class="row">
+        <div class="row" >
             <div class="col-12">
                 {% for item in cart_items %}
-                <div class="card mb-3">
+                <div class="card mb-3" id="cart-item-{{ item.pid }}">
                     <div class="row g-0">
                         <div class="col-md-2 d-flex align-items-stretch">
                             <div class="img-container">
@@ -48,7 +48,7 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">Total</h5>
-                            <h5 class="mb-0">${{ "%.2f"|format(cart_items|sum(attribute='price')|float) }}</h5>
+                            <h5 class="mb-0" id="cart-total">${{ "%.2f"|format(cart_items|sum(attribute='price')|float) }}</h5>
                         </div>
                         <div class="text-end mt-3">
                             <button class="btn btn-primary" type="button">Proceed to Checkout</button>
@@ -67,8 +67,53 @@
 
 <script>
 function removeFromCart(pid) {
+    alert('Deleting Item');
     // TODO: Implement remove from cart functionality
     console.log("Removing product:", pid);
+    fetch('/remove-from-cart', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            pid: pid
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove the cart item from the DOM
+            const cartItem = document.getElementById(`cart-item-${pid}`);
+            if (cartItem) {
+                cartItem.remove();
+            } else {
+                alert('Error:', cartItem)
+            }
+            // Optionally, update the total price and cart count
+            updateCartSummary();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function updateCartSummary() {
+    let total = 0;
+    document.querySelectorAll('.card.mb-3').forEach(item => {
+        const priceText = item.querySelector('.text-end .card-title').textContent;
+        const quantityText = item.querySelector('.text-muted').textContent;
+        
+        const price = parseFloat(priceText.replace('$', ''));
+        const quantity = parseInt(quantityText.replace('Quantity: ', ''));
+        
+        if (!isNaN(price) && !isNaN(quantity)) {
+            total += price * quantity;
+        }
+    });
+    document.getElementById('cart-total').textContent = `$${total.toFixed(2)}`;
 }
 </script>
 {% endblock %}

@@ -1,9 +1,10 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from .models import User
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db, login_manager   #means from __init__.py import db connection
 from flask_login import login_manager, login_user, login_required, logout_user, current_user
 from .queries import get_password
+
 
 auth = Blueprint('auth', __name__)
 
@@ -19,12 +20,12 @@ def login():
             return redirect(url_for('views.home'))
         else:
             flash("Email or Password does not match an existing user", category='error')
-    return render_template("login.html", text="Testing")
+    return render_template("login.html", current_user=current_user)
 
 @auth.route('/logout')
 def logout():
     logout_user()
-    return "<p>Logout</p>"
+    return render_template("home.html")
 
 @auth.route('/create_account', methods=['GET', "POST"])
 def create_account():   

@@ -4,8 +4,9 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
 {% endblock %}
-
 {% block content %}
+
+{% if not current_user.is_authenticated %}
 <div class="container">
     <div class="row justify-content-center mt-5">
         <div class="col-md-6 col-lg-5">
@@ -67,4 +68,11 @@
         </div>
     </div>
 </div>
+{% else %}
+        <div class="text-center">
+            <h4>Hi {{ current_user.name }}! You're already logged in.</h4>
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-primary mt-3">Logout</a>
+        </div>
+{% endif %}
+
 {% endblock %}
