@@ -17,10 +17,11 @@ def select_products(category, num):
                        .limit(num).all()
 
 def get_session_id():
+    
     if 'cart_session_id' not in session:
         new_session_id = str(uuid.uuid4())
         # Find a unique session ID
-        while true:
+        while True:
             if not Cart.query.filter_by(session_id=new_session_id).first():
                 break
             new_session_id = str(uuid.uuid4())
@@ -51,11 +52,10 @@ def get_cart_count(uid=None):
     # Get total number of items in cart
     if uid:  # Logged in user
         result = db.session.query(func.sum(Cart.quantity))\
-                          .filter_by(uid=uid, session_id=None).scalar()
+                          .filter_by(uid=uid).scalar()
     else:  # Guest user
-        session_id = get_session_id()
         result = db.session.query(func.sum(Cart.quantity))\
-                          .filter_by(session_id=session_id, uid=None).scalar()
+                          .filter_by(session_id = get_session_id(), uid=None).scalar()
     return result if result else 0
 
 def get_cart_items(uid=None):
