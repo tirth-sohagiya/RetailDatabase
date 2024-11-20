@@ -16,6 +16,10 @@ def select_products(category, num):
                        .order_by(Product.popularity.desc())\
                        .limit(num).all()
 
+def search_products(search_term):
+    # Search for products by name or description
+    pass
+
 def get_session_id():
     
     if 'cart_session_id' not in session:
@@ -29,6 +33,8 @@ def get_session_id():
     return session['cart_session_id']
 
 def add_to_cart(uid, pid, quantity=1):
+    if quantity <= 0:
+        raise ValueError("Quantity must be greater than 0")
     # Add or update item quantity in cart
     if uid:  # Logged in user
         cart_item = Cart.query.filter_by(uid=uid, pid=pid, session_id=None).first()

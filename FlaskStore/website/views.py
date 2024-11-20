@@ -4,18 +4,18 @@ from flask_login import login_required, current_user
 
 views = Blueprint('views', __name__)
 
-@views.route('/')
-def home():
-    return render_template("home.html")
-
-@views.route('/products')
-def product_route():
+# products is now the home page
+@views.route('/', methods=['GET', "POST"])
+def store_home():
     result = select_products('laptop', 8)
     for prod in result:
         prod.img_path = url_for('static', filename=prod.img_path)
-    print(result)
     #image=url_for('static', filename='laptop.jpg' )
     return render_template("products.html", products=result)
+
+@views.route('/search', methods=['GET', "POST"])
+def search():
+    pass
 
 @views.route('/cart')
 def cart():
@@ -42,6 +42,7 @@ def add_to_cart_route():
             uid = None
         add_to_cart(uid, pid, quantity)
         cart_count = get_cart_count(uid)
+        print("Cart count:", cart_count)
         return jsonify({'success': True, 'cart_count': cart_count})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -62,4 +63,12 @@ def remove_from_cart():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     return jsonify({'success': True})
+
+@views.context_processor
+def inject_cart_count():
+    if current_user.is_authenticated:
+        uid = current_user.id
+    else:
+        uid = None
+    return dict(cart_count=get_cart_count(uid))
 

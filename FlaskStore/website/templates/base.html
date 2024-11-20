@@ -2,102 +2,120 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, intial-scale=1">
-        <link
-            rel="stylesheet"
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
-        >
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css">
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous">
+        <!-- Bootstrap Icons -->
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+        <!-- Custom CSS -->
         <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+        <!-- DaisyUI and Tailwind CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/daisyui@3.9.4/dist/full.css" rel="stylesheet" type="text/css" />
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {},
+                },
+                daisyui: {
+                    themes: ["dark"],
+                },
+            }
+        </script>
         {% block extra_css %}{% endblock %}
-        <link
-            rel="stylesheet"
-            href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
-            crossorigin="anonymous"
-        />
         <title>{% block title %}Home{% endblock %}</title>
     </head>
-    <body>
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <button
-                class="navbar-toggler"
-                type="button"
-                data-toggle="collapse"
-                data-target="#navbar"
-            >
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbar">
-                <div class="navbar-nav">
-                    <a class="nav-item nav-link text-light" id="login" href="/login">Login</a>
+    
+    <body class="bg-base-100">
+        <!-- Modern Header -->
+        <header class="navbar bg-base-100 fixed w-full top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full"> 
+                <div class="flex-1">
+                    {% if request.endpoint == 'views.store_home' or request.endpoint == 'views.search' %}
+                    <form action="{{ url_for('views.search') }}" method="GET" class="flex">
+                        <div class="join max-w-2xl w-full">
+                            <input type="text" name="q" 
+                                class="input input-bordered join-item w-full text-base-content"
+                                placeholder="Search products...">
+                            <button class="btn btn-primary join-item">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                    {% endif %}
                 </div>
-                <div class="navbar-nav">
-                    <a class="nav-item nav-link text-light" id="createAccount" href="/create_account">Create Account</a>
-                </div>
-                <div class="navbar-nav">
-                    <a class="nav-item nav-link text-light" id="logout" href="/logout">Logout</a>
-                </div>
-                <div class="navbar-nav">
-                    <a class="nav-item nav-link text-light" id="home" href="/">Home</a>
-                </div>
-                <div class="navbar-nav">
-                    <a class="nav-item nav-link text-light" id="home" href="/products">Products</a>
-                </div>
-                <div class="navbar-nav flex-grow-1"></div>  
-                <div class="navbar-nav">
-                    <a class="nav-link" href="/cart">
-                        <button class="btn btn-outline-light">
-                            <i class="bi bi-cart-fill me-1"></i>
-                            Cart <span class="badge bg-light text-dark">{{ cart_count if cart_count else 0 }}</span>
-                        </button>
-                    </a>
+                <div class="flex-none gap-4">
+                    <!-- Home Button -->
+                    <div class="dropdown dropdown-end">
+                        <a href="/" class="btn btn-base-content flex items-center justify-center btn-circle">
+                            <i class="bi bi-house-fill text-xl"></i>
+                        </a>
+                    </div>
+                    <!-- Cart Button -->
+                    <div class="dropdown dropdown-end">
+                        <a href="/cart" class="btn btn-base-content flex items-center justify-center btn-circle relative">
+                            <i class="bi bi-cart-fill text-xl"></i>
+                            {% if cart_count and cart_count > 0 %}
+                            <div class="absolute -top-2 -right-2">
+                                <span class="badge badge-sm badge-primary">{{ cart_count }}</span>
+                            </div>
+                            {% endif %}
+                        </a>
+                    </div>
+                    <!-- Account Dropdown -->
+                    <div class="dropdown dropdown-end">
+                        <label tabindex="0" class="btn btn-base-content flex items-center justify-center btn-circle">
+                            <i class="bi bi-person-fill text-xl"></i>
+                        </label>
+                        <ul tabindex="0" class="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
+                            {% if current_user.is_authenticated %}
+                                <li><a href="/logout">Logout</a></li>
+                            {% else %}
+                                <li><a href="/login">Login</a></li>
+                                <li><a href="/create_account">Create Account</a></li>
+                            {% endif %}
+                        </ul>
+                    </div>
                 </div>
             </div>
-        </nav>
-        
+        </header>
+
+        <!-- Main Content with padding for fixed header -->
+        <main class="mt-20">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-            {% for category, message in messages %}
-                {% if category == 'error' %}
-                <div class="alert alert-danger alter-dismissable fade show", role="alert">
-                    {{message}}
-                    <button type="button" class="close" data-dismiss="alert">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                {% else %}
-                <div class="alert alert-success alter-dismissable fade show", role="alert">
-                    {{message}}
-                    <button type="button" class="close" data-dismiss="alert">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                {% endif %}
-            {% endfor %}
+                {% for category, message in messages %}
+                    {% if category == 'error' %}
+                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+                            <div class="alert alert-error">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                <span>{{ message }}</span>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+                            <div class="alert alert-success">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                <span>{{ message }}</span>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
             {% endif %}
         {% endwith %}
-        
-        <div class="container">
-        {% block content %}
-        {% endblock %}
-        </div>
 
-        <script
-        src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
-        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
-        crossorigin="anonymous"
-        ></script>
-        <script
-        src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
-        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
-        crossorigin="anonymous"
-        ></script>
-        <script
-        src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
-        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
-        crossorigin="anonymous"
-        ></script>
-      
-      
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </main>
+
+        <!-- Bootstrap Bundle with Popper -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- Alpine.js for dropdown functionality -->
+        <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     </body>
-</html>
+</html>    <!-- Main Content with padding for fixed header -->
+    <

@@ -17,7 +17,7 @@ def login():
         if check_password_hash(pass_hash, password):
             flash('Logged In!', category='success')
             login_user(User.query.filter_by(email=email).first(), remember=True)
-            return redirect(url_for('views.home'))
+            return redirect(url_for('views.store_home'))
         else:
             flash("Email or Password does not match an existing user", category='error')
     return render_template("login.html", current_user=current_user)
@@ -51,5 +51,5 @@ def create_account():
             # need to create handling for if a user email already exists
             User(email=email, name=name, pass_hash=generate_password_hash(password1, method='pbkdf2:sha256')).save()
             #create_user(email=email, name=name, pass_hash=generate_password_hash(password1, method='pbkdf2:sha256'))
-            return redirect(url_for('views.home'))
+            return redirect(url_for('views.store_home'))
     return render_template("create_account.html")

@@ -23,6 +23,7 @@ class Product(db.Model):
     price = db.Column(db.Float, nullable=False)
     img_path = db.Column(db.String(100), nullable=False)
     popularity = db.Column(db.Integer, nullable=False)
+    description = db.Column(db.String(200), nullable=False)
     def get_id(self):
         return str(self.pid)
 
