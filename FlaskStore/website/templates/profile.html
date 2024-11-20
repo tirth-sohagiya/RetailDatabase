@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="container mt-24">
+    <div class="card bg-base-300 shadow-xl max-w-2xl mx-auto">
+        <div class="card-body">
+            <h2 class="card-title text-secondary-content text-2xl mb-6">Profile Information</h2>
+            
+            <div class="space-y-4">
+                <div class="flex items-center space-x-4">
+                    <i class="bi bi-person-circle text-3xl text-neutral-content"></i>
+                    <div>
+                        <h3 class="text-lg text-secondary-content">{{ current_user.name }}</h3>
+                        <p class="text-neutral-content">{{ current_user.email }}</p>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Account Stats -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="stat bg-base-200 rounded-box">
+                        <div class="stat-title">Member Since</div>
+                        <div class="stat-value text-primary">2023</div>
+                    </div>
+                    <div class="stat bg-base-200 rounded-box">
+                        <div class="stat-title">Orders</div>
+                        <div class="stat-value text-primary">0</div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="divider"></div>
+                <div class="flex flex-col space-y-2">
+                    <a href="/cart" class="btn btn-primary">
+                        <i class="bi bi-cart-fill mr-2"></i>
+                        View Cart
+                    </a>
+                    <button class="btn btn-outline">
+                        <i class="bi bi-gear-fill mr-2"></i>
+                        Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

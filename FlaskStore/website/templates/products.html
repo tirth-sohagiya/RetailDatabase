@@ -45,7 +45,24 @@ function addToCart(productId) {
     .then(data => {
         if (data.success) {
             // Update cart count in navbar
-            document.querySelector('.badge').textContent = data.cart_count;
+            const cartBadge = document.querySelector('.badge-primary');
+            const cartContainer = document.querySelector('.absolute.-top-2.-right-2');
+            
+            if (data.cart_count > 0) {
+                if (!cartBadge) {
+                    // Create new badge if it doesn't exist
+                    const newBadgeContainer = document.createElement('div');
+                    newBadgeContainer.className = 'absolute -top-2 -right-2';
+                    const newBadge = document.createElement('span');
+                    newBadge.className = 'badge badge-sm badge-primary';
+                    newBadge.textContent = data.cart_count;
+                    newBadgeContainer.appendChild(newBadge);
+                    document.querySelector('.btn-base-content.relative').appendChild(newBadgeContainer);
+                } else {
+                    // Update existing badge
+                    cartBadge.textContent = data.cart_count;
+                }
+            }
             // Show success message
             alert('Item added to cart!');
         } else {

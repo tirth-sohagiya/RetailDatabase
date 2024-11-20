@@ -25,7 +25,7 @@ def login():
 @auth.route('/logout')
 def logout():
     logout_user()
-    return render_template("home.html")
+    return redirect(url_for('views.store_home'))
 
 @auth.route('/create_account', methods=['GET', "POST"])
 def create_account():   
@@ -53,3 +53,7 @@ def create_account():
             #create_user(email=email, name=name, pass_hash=generate_password_hash(password1, method='pbkdf2:sha256'))
             return redirect(url_for('views.store_home'))
     return render_template("create_account.html")
+
+@auth.route('/profile')
+def profile():
+    return render_template("profile.html", current_user=current_user)
