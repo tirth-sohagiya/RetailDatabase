@@ -78,7 +78,7 @@ foreign key(user_id) references user(user_id) on delete cascade,
 foreign key(product_id) references product(product_id) on delete cascade
 );
 
-create table customer_order( # order is a sql keyword, can't name the table 'order'
+create table customer_order( # order is a sql keyword, cant name the table 'order'
 order_id int auto_increment,
 user_id int,
 address_id int,
