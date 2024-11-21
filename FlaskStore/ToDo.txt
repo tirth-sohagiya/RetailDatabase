@@ -1,0 +1,19 @@
+Generate Fake Data
+    - 10000 users
+    - 100 products
+    - 5 categories
+    - At least 1 payment type per user_id
+    - At least 1 address per user_id
+    - order history of 0-100 per user
+    - 1000 current carts 
+    - 
+
+Implement product search
+
+Implement side bars that filter by price, category, rating
+
+order history page
+
+edit account page
+
+create indexes on database
