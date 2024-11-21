@@ -1,0 +1,104 @@
+erDiagram
+    USER ||--o{ ORDER : "places"
+    USER ||--o{ CART : "has"
+    USER ||--o{ ADDRESS : "has"
+    USER ||--o{ PAYMENT : "has"
+    USER ||--o{ RATING : "gives"
+    CATEGORY ||--o{ PRODUCT : "contains"
+    ORDER ||--o{ ORDER_ITEM : "contains"
+    ORDER ||--o{ TRANSACTION : "has"
+    PRODUCT ||--o{ ORDER_ITEM : "included in"
+    PRODUCT ||--o{ CART : "in"
+    PRODUCT ||--o{ RATING : "receives"
+    USER {
+        int user_id PK
+        string username
+        string email
+        string password_hash
+        datetime created_at
+        string first_name
+        string last_name
+        string phone_number
+    }
+    CATEGORY {
+        int category_id PK
+        string name
+        string description
+    }
+    PRODUCT {
+        int product_id PK
+        int category_id FK
+        string name
+        string img_path
+        string description
+        decimal price
+        int stock_quantity
+        int rating
+    }
+    RATING {
+        int rating_id PK
+        int user_id FK
+        int product_id FK
+        int stars
+        string review_text
+        datetime rating_date
+    }
+    ORDER {
+        int order_id PK
+        int user_id FK
+        int shipping_address_id FK
+        datetime order_date
+        string status
+        decimal total_amount
+        string order_number
+        string shipping_method
+    }
+    ORDER_ITEM {
+        int order_item_id PK
+        int order_id FK
+        int product_id FK
+        int quantity
+        decimal unit_price
+        decimal subtotal
+        string product_name
+        string product_sku
+    }
+    TRANSACTION {
+        int transaction_id PK
+        int order_id FK
+        int payment_id FK
+        decimal amount
+        string status
+        string payment_method
+        datetime transaction_time
+        string external_transaction_id
+        string response_code
+    }
+    CART {
+        int cart_id PK
+        int user_id FK
+        int product_id FK
+        int quantity
+        datetime added_at
+    }
+    ADDRESS {
+        int address_id PK
+        int user_id FK
+        string street_address
+        string city
+        string state
+        string postal_code
+        string country
+        boolean is_default
+        string address_type
+    }
+    PAYMENT {
+        int payment_id PK
+        int user_id FK
+        string payment_type
+        string card_last_four
+        string card_brand
+        datetime expires_at
+        boolean is_default
+        string billing_name
+    }
