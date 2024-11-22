@@ -1,6 +1,6 @@
 # This file contains SQLAlchemy ORM queries
 from . import db
-from .models import User, Product, Cart
+from .models import User, Product, Cart, Category, Transaction, Rating, Address, Order, Payment, OrderItem
 from sqlalchemy import func 
 from flask import session # Using this to help track guest carts
 import uuid # create unique guest ids
@@ -12,9 +12,12 @@ def get_password(email):
 
 def select_products(category, num):
     # Get products in a category, ordered by popularity
-    return Product.query.filter_by()\
-                       .order_by(Product.popularity.desc())\
-                       .limit(num).all()
+    return Product.query.with_entities(
+        Product,
+        Category.category_id,
+        Category.category_name.label('category_name')
+    ).join(Category, Product.category_id == Category.category_id)\
+    .limit(num).all()
 
 def search_products(search_term):
     # Search for products by name or description
@@ -32,78 +35,77 @@ def get_session_id():
         session['cart_session_id'] = new_session_id
     return session['cart_session_id']
 
-def add_to_cart(uid, pid, quantity=1):
+def add_to_cart(user_id, product_id, quantity=1):
+    """
+    Add an item to cart. If user is logged in, use user_id, else use session
+    """
     if quantity <= 0:
         raise ValueError("Quantity must be greater than 0")
-    # Add or update item quantity in cart
-    if uid:  # Logged in user
-        cart_item = Cart.query.filter_by(uid=uid, pid=pid, session_id=None).first()
+    if user_id:  # Logged in user
+        cart_item = Cart.query.filter_by(user_id=user_id, product_id=product_id, session_id=None).first()
     else:  # Guest user
         session_id = get_session_id()
-        cart_item = Cart.query.filter_by(session_id=session_id, pid=pid, uid=None).first()
+        cart_item = Cart.query.filter_by(session_id=session_id, product_id=product_id, user_id=None).first()
 
     if cart_item:
         cart_item.quantity += quantity
     else:
         cart_item = Cart(
-            uid=uid,
-            pid=pid,
+            user_id=user_id,
+            product_id=product_id,
             quantity=quantity,
-            session_id=None if uid else get_session_id()
+            session_id=None if user_id else get_session_id()
         )
         db.session.add(cart_item)
     db.session.commit()
 
-def get_cart_count(uid=None):
-    # Get total number of items in cart
-    if uid:  # Logged in user
+def get_cart_count(user_id=None):
+    """Get number of items in cart"""
+    if user_id:  # Logged in user
         result = db.session.query(func.sum(Cart.quantity))\
-                          .filter_by(uid=uid).scalar()
+                          .filter_by(user_id=user_id).scalar()
     else:  # Guest user
         result = db.session.query(func.sum(Cart.quantity))\
-                          .filter_by(session_id = get_session_id(), uid=None).scalar()
+                          .filter_by(session_id = get_session_id(), user_id=None).scalar()
     return result if result else 0
 
-def get_cart_items(uid=None):
-    # Get all items in cart with product details
+def get_cart_items(user_id=None):
+    """Get all items in cart with product details"""
     query = db.session.query(
         Product.name,
         Product.price,
         Product.img_path,
         Cart.quantity,
-        Product.pid
-    ).join(Cart, Cart.pid == Product.pid)
+        Product.product_id
+    ).join(Cart, Cart.product_id == Product.product_id)
 
-    if uid:  # Logged in user
-        query = query.filter(Cart.uid == uid, Cart.session_id == None)
+    if user_id:  # Logged in user
+        query = query.filter(Cart.user_id == user_id, Cart.session_id == None)
     else:  # Guest user
         session_id = get_session_id()
-        query = query.filter(Cart.session_id == session_id, Cart.uid == None)
+        query = query.filter(Cart.session_id == session_id, Cart.user_id == None)
 
     return query.all()
 
-def transfer_cart_signup(uid):
-    """ This function transfers a guest cart to a user when they sign up for an account """
-    # Update the cart items with the new user ID
-    db.session.query(Cart).filter_by(session_id=get_session_id()).update({"uid": uid})
+def transfer_cart_signup(user_id):
+    """Transfer guest cart to user cart on signup"""
+    session_id = get_session_id()
+    db.session.query(Cart).filter_by(session_id=get_session_id()).update({"user_id": user_id})
     db.session.commit()
 
-# clear all items in the current cart
-def clear_cart(uid=None):
-    if uid:
-         db.session.query(Cart).filter_by(uid = uid).delete()
-         db.session.commit()
+def clear_cart(user_id=None):
+    if user_id:
+         db.session.query(Cart).filter_by(user_id = user_id).delete()
     else:
-        db.session.query(Cart).filter_by(session_id=get_session_id()).delete()
-        db.session.commit()
+        db.session.query(Cart).filter_by(session_id = get_session_id()).delete()
+    db.session.commit()
 
-def delete_from_cart(pid, uid=None):
-    print("In delete_from_cart. uid:", uid, "pid:", pid)
-    if uid:
-        print("In uid")
-        db.session.query(Cart).filter_by(uid=uid, pid=pid).delete()
-        db.session.commit()
+def delete_from_cart(product_id, user_id=None):
+    print("In delete_from_cart. user_id:", user_id, "product_id:", product_id)
+    if user_id:
+        print("In user_id")
+        db.session.query(Cart).filter_by(user_id=user_id, product_id=product_id).delete()
     else:
-        print("In pid")
-        db.session.query(Cart).filter_by(session_id=get_session_id(), pid=pid).delete()
-        db.session.commit()
+        print("In product_id")
+        db.session.query(Cart).filter_by(session_id=get_session_id(), product_id=product_id).delete()
+    db.session.commit()

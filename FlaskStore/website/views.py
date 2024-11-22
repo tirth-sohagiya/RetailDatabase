@@ -7,11 +7,15 @@ views = Blueprint('views', __name__)
 # products is now the home page
 @views.route('/', methods=['GET', "POST"])
 def store_home():
-    result = select_products('laptop', 8)
-    for prod in result:
-        prod.img_path = url_for('static', filename=prod.img_path)
-    #image=url_for('static', filename='laptop.jpg' )
-    return render_template("products.html", products=result)
+    results = select_products('laptop', 120)
+    products = []
+    for result in results:
+        product = result[0]  # Get the Product object
+        product.category_id = result[1]  # Add category_id
+        product.category_name = result[2]  # Add category_name
+        product.img_path = url_for('static', filename=f"{product.category_name.lower()}/{product.img_path}")
+        products.append(product)
+    return render_template("products.html", products=products)
 
 @views.route('/search', methods=['GET', "POST"])
 def search():
@@ -19,56 +23,58 @@ def search():
 
 @views.route('/cart')
 def cart():
+    """Display cart page"""
     if current_user.is_authenticated:
-        uid = current_user.id
+        user_id = current_user.id
     else:
-        uid = None
-    return render_template("cart.html", cart_items=get_cart_items(uid))
+        user_id = None
+    return render_template("cart.html", cart_items=get_cart_items(user_id))
 
 @views.route('/add-to-cart', methods=['POST'])
 def add_to_cart_route():
+    """Add item to cart"""
     data = request.get_json()
-    pid = data.get('pid')
+    product_id = data.get('product_id')
     quantity = data.get('quantity', 1)
-    
-    if not pid:
+
+    if not product_id:
         return jsonify({'error': 'Product ID is required'}), 400
-    
+
     try:
-        # Pass uid as None for guest users
+        # Pass user_id as None for guest users
         if current_user.is_authenticated:
-            uid = current_user.id  
-        else: 
-            uid = None
-        add_to_cart(uid, pid, quantity)
-        cart_count = get_cart_count(uid)
-        print("Cart count:", cart_count)
-        return jsonify({'success': True, 'cart_count': cart_count})
+            user_id = current_user.id  
+        else:
+            user_id = None
+        add_to_cart(user_id, product_id, quantity)
+        cart_count = get_cart_count(user_id)
+        return jsonify({'message': 'Item added to cart', 'cart_count': cart_count}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @views.route('/remove-from-cart', methods=['POST'])
 def remove_from_cart():
+    """Delete item from cart"""
     data = request.get_json()
-    pid = data.get('pid')
+    product_id = data.get('product_id')
 
-    if not pid:
+    if not product_id:
         return jsonify({'error': 'Product ID is required'}), 400
 
     try:
         if current_user.is_authenticated:
-            delete_from_cart(pid, current_user.id)
+            delete_from_cart(product_id, current_user.id)
         else:
-            delete_from_cart(pid)
+            delete_from_cart(product_id)
+        return jsonify({'message': 'Item deleted from cart'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    return jsonify({'success': True})
 
 @views.context_processor
-def inject_cart_count():
+def cart_count_processor():
+    """Add cart count to all templates"""
     if current_user.is_authenticated:
-        uid = current_user.id
+        user_id = current_user.id
     else:
-        uid = None
-    return dict(cart_count=get_cart_count(uid))
-
+        user_id = None
+    return dict(cart_count=get_cart_count(user_id))

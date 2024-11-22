@@ -5,7 +5,7 @@ from flask_login import LoginManager, current_user
 import pymysql.cursors
 
 db = SQLAlchemy()
-DB_NAME = "flasktest"
+DB_NAME = "SimpleStore"
 # connection = pymysql.connect(host='localhost',
 #                              user='root',
 #                              password='root',

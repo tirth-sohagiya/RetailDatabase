@@ -20,7 +20,7 @@
                     </div>
                     <div class="flex justify-between items-center gap-1">
                         <h4 class="card-price text-neutral-content mb-0">${{ "%.2f"|format(product.price) }}</h4>
-                        <button onclick="addToCart({{ product.pid }})" class="btn btn-primary btn-smflex items-center justify-center">Add To Cart</button>
+                        <button onclick="addToCart({{ product.product_id }})" class="btn btn-primary btn-sm flex items-center justify-center">Add To Cart</button>
                     </div>
                 </div>
             </div>
@@ -37,7 +37,7 @@ function addToCart(productId) {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            pid: productId,
+            product_id: productId,
             quantity: 1
         })
     })

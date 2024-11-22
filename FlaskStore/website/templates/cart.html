@@ -11,7 +11,7 @@
         <div class="row" >
             <div class="col-12">
                 {% for item in cart_items %}
-                <div class="card mb-3" id="cart-item-{{ item.pid }}">
+                <div class="card mb-3" id="cart-item-{{ item.product_id }}">
                     <div class="row g-0">
                         <div class="col-md-2 d-flex align-items-stretch">
                             <div class="img-container">
@@ -34,7 +34,7 @@
                                             <small class="text-muted">Total: ${{ "%.2f"|format(item.price * item.quantity) }}</small>
                                         </p>
                                         <button class="btn btn-sm btn-danger" 
-                                                onclick="removeFromCart({{ item.pid }})">
+                                                onclick="removeFromCart({{ item.product_id }})">
                                             Remove
                                         </button>
                                     </div>
@@ -66,24 +66,24 @@
 </div>
 
 <script>
-function removeFromCart(pid) {
+function removeFromCart(product_id) {
     alert('Deleting Item');
     // TODO: Implement remove from cart functionality
-    console.log("Removing product:", pid);
+    console.log("Removing product:", product_id);
     fetch('/remove-from-cart', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            pid: pid
+            product_id: product_id
         })
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
             // Remove the cart item from the DOM
-            const cartItem = document.getElementById(`cart-item-${pid}`);
+            const cartItem = document.getElementById(`cart-item-${product_id}`);
             if (cartItem) {
                 cartItem.remove();
             } else {

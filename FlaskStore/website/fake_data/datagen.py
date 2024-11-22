@@ -3,18 +3,24 @@ from random import randint
 from werkzeug.security import generate_password_hash
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
-FIRSTUSER = 2
-NUM = 10000
-FIRSTPRODID = 203
-LASTPRODID = 223
+import pymysql
 import struct
+from enum import Enum
+
+# Import OrderStatus from models to ensure consistency
+class OrderStatus(str, Enum):
+    PENDING = 'pending'
+    PROCESSING = 'processing'
+    SHIPPED = 'shipped'
+    DELIVERED = 'delivered'
+    CANCELLED = 'cancelled'
+
+fake = Faker()
 
 def bytes_to_bits_binary(byte_data):
     bits_data = bin(int.from_bytes(byte_data, byteorder='big'))[2:]
     return bits_data
 
-
-fake = Faker()
 
 def gen_user():
     with open('fake_users.txt', 'w+') as f, open('passwords.txt', 'w+') as p:
@@ -97,29 +103,151 @@ def fake_rating():
                 print(rating_string, file=f)
             
 def fake_orders():
-    with open('orders.txt', 'w+') as f1, open('order_items.txt'):
+    # Create database connection
+    connection = pymysql.connect(
+        host='aws.cjwc228ggyr7.us-west-1.rds.amazonaws.com',
+        user='admin',
+        password='password',
+        database='SimpleStore',
+        charset='utf8mb4',
+        cursorclass=pymysql.cursors.DictCursor
+    )
+    
+    def get_product_price(product_id, connection):
+        try:
+            with connection.cursor() as cursor:
+                sql = "SELECT price FROM product WHERE product_id = %s"
+                cursor.execute(sql, (product_id,))
+                result = cursor.fetchone()
+                return float(result['price']) if result else 0.0
+        except Exception as e:
+            print(f"Error getting price for product {product_id}: {e}")
+            return 0.0
+
+    def get_user_addresses(user_id, connection):
+        """Get all address IDs for a user"""
+        try:
+            with connection.cursor() as cursor:
+                sql = "SELECT address_id FROM address WHERE user_id = %s"
+                cursor.execute(sql, (user_id,))
+                return [row['address_id'] for row in cursor.fetchall()]
+        except Exception as e:
+            print(f"Error getting addresses for user {user_id}: {e}")
+            return []
+
+    def get_user_payments(user_id, connection):
+        """Get all payment IDs for a user"""
+        try:
+            with connection.cursor() as cursor:
+                sql = "SELECT payment_id FROM payment WHERE user_id = %s"
+                cursor.execute(sql, (user_id,))
+                return [row['payment_id'] for row in cursor.fetchall()]
+        except Exception as e:
+            print(f"Error getting payments for user {user_id}: {e}")
+            return []
+
+    try:
+        cursor = connection.cursor()
         for i in range(FIRSTUSER, NUM):
-            num_orders = randint(0, 10)
+            user_id = i
+            # Get user's addresses and payment methods
+            user_addresses = get_user_addresses(user_id, connection)
+            user_payments = get_user_payments(user_id, connection)
+            
+            # Only create orders if user has both addresses and payment methods
+            if not user_addresses or not user_payments:
+                continue
+                
+            num_orders = randint(0, 10)  # Each user has 0-10 orders
             for j in range(num_orders):
-                items_per_order = randint(1, 10):
-
-
-def fake_carts():
-    pass
+                # Get random address and payment from user's actual data
+                address_id = fake.random_element(user_addresses)
+                payment_id = fake.random_element(user_payments)
+                order_date = fake.date_time_between(start_date='-2y', end_date='now')
+                status = fake.random_element(elements=tuple(OrderStatus))  # Use proper enum values
+                
+                # Generate order number
+                order_number = f"ORD-{fake.date_time().strftime('%Y%m')}-{str(j+1).zfill(5)}"
+                
+                # Create order first to get the auto-incremented ID
+                order_sql = """
+                    INSERT INTO customer_order (order_number, user_id, address_id, order_date, status)
+                    VALUES (%s, %s, %s, %s, %s)
+                """
+                cursor.execute(order_sql, (order_number, user_id, address_id, order_date, status.value))
+                order_id = cursor.lastrowid
+                
+                # Generate order items
+                items_per_order = randint(1, 5)  # Each order has 1-5 items
+                total_amount = 0
+                
+                for k in range(items_per_order):
+                    product_id = randint(FIRSTPRODID, LASTPRODID)
+                    quantity = randint(1, 3)
+                    # Get price at time of purchase
+                    unit_price = get_product_price(product_id, connection)
+                    total_amount += unit_price * quantity
+                    
+                    # Insert order item with unit_price
+                    order_item_sql = """
+                        INSERT INTO order_item (order_id, product_id, quantity, unit_price)
+                        VALUES (%s, %s, %s, %s)
+                    """
+                    cursor.execute(order_item_sql, (order_id, product_id, quantity, unit_price))
+                
+                # Use the same or different address for billing
+                billing_address_id = fake.random_element([address_id] + user_addresses)  # 50% chance same as shipping
+                
+                # Create transaction
+                external_transaction_id = fake.uuid4()
+                transaction_sql = """
+                    INSERT INTO order_transaction (order_id, payment_id, billing_address_id,
+                                                external_transaction_id, transaction_time, amount)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """
+                cursor.execute(transaction_sql, (order_id, payment_id, billing_address_id,
+                                              external_transaction_id, order_date, total_amount))
+                
+                # Commit after each order and its related records
+                connection.commit()
+                
+    except Exception as e:
+        print(f"Error generating orders: {e}")
+        connection.rollback()
+    finally:
+        connection.close()
 
 def fake_transactions():
+    # This function is no longer needed as transactions are created in fake_orders
     pass
-                
 
-        
+def fake_carts():
+    with open('carts.txt', 'w+') as f:
+        for i in range(FIRSTUSER, NUM):
+            cart_chance = randint(1,10)  # 10% chance a user has an active cart
+            if cart_chance == 1:
+                num_items = randint(1, 10)
+                for j in range(num_items):
+                    user_id = i
+                    product_id = randint(FIRSTPRODID, LASTPRODID)
+                    quantity = randint(1, 5)
+                    added_at = fake.date_time()
+                    session_id = fake.uuid4()  # Add session_id for guest carts
+                    cart_string = f"({user_id}, {product_id}, '{session_id}', {quantity}, '{added_at}'),"
+                    print(cart_string, file=f)
 
-    
+FIRSTUSER = 2
+NUM = 10000
+FIRSTPRODID = 203
+LASTPRODID = 223
 
 if __name__ == "__main__":
     #gen_payment()
     #gen_user()
     #gen_address()
-    fake_rating()
+    #fake_rating()
+    #fake_carts()
+    fake_orders()
 
 """payment_id int auto_increment,
 user_id int,
@@ -141,4 +269,5 @@ country varchar(50),
 is_default boolean,
 primary key(address_id),
 foreign key(user_id) references user(user_id) on delete cascade
-);"""
+);
+"""
