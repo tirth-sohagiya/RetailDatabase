@@ -7,6 +7,12 @@ import pymysql
 import struct
 from enum import Enum
 
+# Constants for data generation
+FIRSTUSER = 2
+NUM = 10000
+FIRSTPRODID = 203
+LASTPRODID = 223
+
 # Import OrderStatus from models to ensure consistency
 class OrderStatus(str, Enum):
     PENDING = 'pending'
@@ -103,119 +109,129 @@ def fake_rating():
                 print(rating_string, file=f)
             
 def fake_orders():
-    # Create database connection
-    connection = pymysql.connect(
-        host='aws.cjwc228ggyr7.us-west-1.rds.amazonaws.com',
-        user='admin',
-        password='password',
-        database='SimpleStore',
-        charset='utf8mb4',
-        cursorclass=pymysql.cursors.DictCursor
-    )
-    
-    def get_product_price(product_id, connection):
+    print(f"Starting order generation for users {FIRSTUSER} to {NUM}")
+    # Create output file for SQL statements
+    with open('order_inserts.sql', 'w') as f:
+        # Get all user data
+        connection = pymysql.connect(
+            host='aws.cjwc228ggyr7.us-west-1.rds.amazonaws.com',
+            user='admin',
+            password='password',
+            database='SimpleStore',
+            charset='utf8mb4',
+            cursorclass=pymysql.cursors.DictCursor
+        )
+        
         try:
-            with connection.cursor() as cursor:
-                sql = "SELECT price FROM product WHERE product_id = %s"
-                cursor.execute(sql, (product_id,))
-                result = cursor.fetchone()
-                return float(result['price']) if result else 0.0
-        except Exception as e:
-            print(f"Error getting price for product {product_id}: {e}")
-            return 0.0
-
-    def get_user_addresses(user_id, connection):
-        """Get all address IDs for a user"""
-        try:
-            with connection.cursor() as cursor:
-                sql = "SELECT address_id FROM address WHERE user_id = %s"
-                cursor.execute(sql, (user_id,))
-                return [row['address_id'] for row in cursor.fetchall()]
-        except Exception as e:
-            print(f"Error getting addresses for user {user_id}: {e}")
-            return []
-
-    def get_user_payments(user_id, connection):
-        """Get all payment IDs for a user"""
-        try:
-            with connection.cursor() as cursor:
-                sql = "SELECT payment_id FROM payment WHERE user_id = %s"
-                cursor.execute(sql, (user_id,))
-                return [row['payment_id'] for row in cursor.fetchall()]
-        except Exception as e:
-            print(f"Error getting payments for user {user_id}: {e}")
-            return []
-
-    try:
-        cursor = connection.cursor()
-        for i in range(FIRSTUSER, NUM):
-            user_id = i
-            # Get user's addresses and payment methods
-            user_addresses = get_user_addresses(user_id, connection)
-            user_payments = get_user_payments(user_id, connection)
+            cursor = connection.cursor()
             
-            # Only create orders if user has both addresses and payment methods
-            if not user_addresses or not user_payments:
-                continue
+            # Get addresses
+            cursor.execute("SELECT user_id, address_id FROM address")
+            addresses = cursor.fetchall()
+            print(f"Found {len(addresses)} addresses")
+            
+            # Get payments
+            cursor.execute("SELECT user_id, payment_id FROM payment")
+            payments = cursor.fetchall()
+            print(f"Found {len(payments)} payments")
+            
+            # Get product prices
+            cursor.execute("SELECT product_id, price FROM product")
+            product_prices = {row['product_id']: float(row['price']) for row in cursor.fetchall()}
+            print(f"Found {len(product_prices)} products")
+            
+            # Organize data by user
+            user_data = {}
+            for row in addresses:
+                user_id = row['user_id']
+                if user_id not in user_data:
+                    user_data[user_id] = {'addresses': [], 'payments': []}
+                user_data[user_id]['addresses'].append(row['address_id'])
                 
-            num_orders = randint(0, 10)  # Each user has 0-10 orders
+            for row in payments:
+                user_id = row['user_id']
+                if user_id not in user_data:
+                    user_data[user_id] = {'addresses': [], 'payments': []}
+                user_data[user_id]['payments'].append(row['payment_id'])
+            
+            print(f"Found data for {len(user_data)} users")
+            
+        finally:
+            connection.close()
+
+        # Initialize lists to store values
+        order_values = []
+        order_item_values = []
+        transaction_values = []
+        
+        order_id = 1  # Start with order_id 1
+        users_with_orders = 0
+        
+        for i in range(FIRSTUSER, NUM):
+            print("i")
+            if i not in user_data or not user_data[i]['addresses'] or not user_data[i]['payments']:
+                continue
+            print("still in loop")    
+            user_addresses = user_data[i]['addresses']
+            user_payments = user_data[i]['payments']
+            
+            num_orders = randint(0, 5)  # Reduced max orders per user
+            if num_orders > 0:
+                users_with_orders += 1
+                
             for j in range(num_orders):
-                # Get random address and payment from user's actual data
                 address_id = fake.random_element(user_addresses)
                 payment_id = fake.random_element(user_payments)
                 order_date = fake.date_time_between(start_date='-2y', end_date='now')
-                status = fake.random_element(elements=tuple(OrderStatus))  # Use proper enum values
-                
-                # Generate order number
+                status = fake.random_element(elements=tuple(OrderStatus))
                 order_number = f"ORD-{fake.date_time().strftime('%Y%m')}-{str(j+1).zfill(5)}"
                 
-                # Create order first to get the auto-incremented ID
-                order_sql = """
-                    INSERT INTO customer_order (order_number, user_id, address_id, order_date, status)
-                    VALUES (%s, %s, %s, %s, %s)
-                """
-                cursor.execute(order_sql, (order_number, user_id, address_id, order_date, status.value))
-                order_id = cursor.lastrowid
+                # Add order values
+                order_values.append(
+                    f"({order_id}, '{order_number}', {i}, {address_id}, '{order_date}', '{status.value}')"
+                )
                 
                 # Generate order items
-                items_per_order = randint(1, 5)  # Each order has 1-5 items
+                items_per_order = randint(1, 3)
                 total_amount = 0
                 
                 for k in range(items_per_order):
                     product_id = randint(FIRSTPRODID, LASTPRODID)
                     quantity = randint(1, 3)
-                    # Get price at time of purchase
-                    unit_price = get_product_price(product_id, connection)
+                    unit_price = product_prices.get(product_id, 0.0)
                     total_amount += unit_price * quantity
                     
-                    # Insert order item with unit_price
-                    order_item_sql = """
-                        INSERT INTO order_item (order_id, product_id, quantity, unit_price)
-                        VALUES (%s, %s, %s, %s)
-                    """
-                    cursor.execute(order_item_sql, (order_id, product_id, quantity, unit_price))
+                    # Add order item values
+                    order_item_values.append(
+                        f"({order_id}, {product_id}, {quantity}, {unit_price})"
+                    )
                 
-                # Use the same or different address for billing
-                billing_address_id = fake.random_element([address_id] + user_addresses)  # 50% chance same as shipping
-                
-                # Create transaction
+                # Add transaction values
+                billing_address_id = fake.random_element(user_addresses)
                 external_transaction_id = fake.uuid4()
-                transaction_sql = """
-                    INSERT INTO order_transaction (order_id, payment_id, billing_address_id,
-                                                external_transaction_id, transaction_time, amount)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                """
-                cursor.execute(transaction_sql, (order_id, payment_id, billing_address_id,
-                                              external_transaction_id, order_date, total_amount))
+                transaction_values.append(
+                    f"({order_id}, {payment_id}, {billing_address_id}, '{external_transaction_id}', '{order_date}', {total_amount})"
+                )
                 
-                # Commit after each order and its related records
-                connection.commit()
-                
-    except Exception as e:
-        print(f"Error generating orders: {e}")
-        connection.rollback()
-    finally:
-        connection.close()
+                order_id += 1
+
+        print(f"Generated orders for {users_with_orders} users")
+        print(f"Total orders: {len(order_values)}")
+        print(f"Total order items: {len(order_item_values)}")
+        print(f"Total transactions: {len(transaction_values)}")
+
+        # Write all inserts to file
+        f.write("INSERT INTO customer_order (order_id, order_number, user_id, address_id, order_date, status) VALUES\n")
+        f.write(",\n".join(order_values))
+        f.write(";\n\n")
+
+        f.write("INSERT INTO order_item (order_id, product_id, quantity, unit_price) VALUES\n")
+        f.write(",\n".join(order_item_values))
+        f.write(";\n\n")
+
+        f.write("INSERT INTO order_transaction (order_id, payment_id, billing_address_id, external_transaction_id, transaction_time, amount) VALUES\n")
+        f.write(",\n".join(transaction_values))
+        f.write(";\n")
 
 def fake_transactions():
     # This function is no longer needed as transactions are created in fake_orders
@@ -235,11 +251,6 @@ def fake_carts():
                     session_id = fake.uuid4()  # Add session_id for guest carts
                     cart_string = f"({user_id}, {product_id}, '{session_id}', {quantity}, '{added_at}'),"
                     print(cart_string, file=f)
-
-FIRSTUSER = 2
-NUM = 10000
-FIRSTPRODID = 203
-LASTPRODID = 223
 
 if __name__ == "__main__":
     #gen_payment()

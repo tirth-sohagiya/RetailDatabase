@@ -109,3 +109,14 @@ def delete_from_cart(product_id, user_id=None):
         print("In product_id")
         db.session.query(Cart).filter_by(session_id=get_session_id(), product_id=product_id).delete()
     db.session.commit()
+
+# Using instead of a database trigger to batch update all product ratings
+def set_all_product_ratings():
+    # Select all product_ids
+    product_ids = db.session.query(Product.product_id).all()
+    for product in product_ids:
+        rating = db.session.query(func.avg(Rating.stars)).filter_by(product_id=product.product_id).scalar()
+        db.session.query(Product).filter_by(product_id=product.product_id).update({"rating": rating})
+        db.session.commit()
+        
+    

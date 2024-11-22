@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, jsonify, url_for
-from .queries import select_products, add_to_cart, get_cart_count, get_cart_items, delete_from_cart
+from .queries import select_products, add_to_cart, get_cart_count, get_cart_items, delete_from_cart, set_all_product_ratings
 from flask_login import login_required, current_user
 
 views = Blueprint('views', __name__)
@@ -7,6 +7,7 @@ views = Blueprint('views', __name__)
 # products is now the home page
 @views.route('/', methods=['GET', "POST"])
 def store_home():
+    set_all_product_ratings()
     results = select_products('laptop', 120)
     products = []
     for result in results:
