@@ -12,7 +12,7 @@ def get_password(email):
     user = User.query.filter_by(email=email).first()
     return user.pass_hash if user else None
 
-#@lru_cache(maxsize=32)
+@lru_cache(maxsize=32)
 def select_products(category, num, sort_by='default', sort_order='asc'):
     start = time.time()
     # Get products in a category, ordered by the specified field
@@ -31,12 +31,35 @@ def select_products(category, num, sort_by='default', sort_order='asc'):
         query = query.order_by(Product.rating.desc() if sort_order == 'desc' else Product.rating)
     end = time.time()
     print(f"Product Select Query time: {end - start}")
-    
+    print(query.limit(num).all())
     return query.limit(num).all()
 
 def search_products(search_term):
     # Search for products by name or description
     pass
+
+def update_product_image_paths():
+    """Update all product image paths to include category name as parent directory"""
+    try:
+        # Get all products with their categories
+        products = db.session.query(Product, Category)\
+            .join(Category, Product.category_id == Category.category_id)\
+            .all()
+        
+        # Update each product's image path
+        for product, category in products:
+            # Only update if the category name isn't already in the path
+            if not product.img_path.startswith(f"{category.category_name.lower()}/"):
+                product.img_path = f"{category.category_name.lower()}/{product.img_path}"
+        
+        # Commit the changes
+        db.session.commit()
+        print(f"Successfully updated {len(products)} product image paths")
+        return True
+    except Exception as e:
+        print(f"Error updating product image paths: {str(e)}")
+        db.session.rollback()
+        return False
 
 def get_session_id():
     
@@ -99,7 +122,7 @@ def get_cart_items(user_id=None):
     else:  # Guest user
         session_id = get_session_id()
         query = query.filter(Cart.session_id == session_id, Cart.user_id == None)
-
+    print(query.all())
     return query.all()
 
 def transfer_cart_signup(user_id):
@@ -133,4 +156,3 @@ def set_all_product_ratings():
         rating = db.session.query(func.avg(Rating.stars)).filter_by(product_id=product.product_id).scalar()
         db.session.query(Product).filter_by(product_id=product.product_id).update({"rating": rating})
         db.session.commit()
-        

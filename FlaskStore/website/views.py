@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, jsonify, url_for, redirect
-from .queries import select_products, add_to_cart, get_cart_count, get_cart_items, delete_from_cart, set_all_product_ratings
+from .queries import select_products, add_to_cart, get_cart_count, get_cart_items, delete_from_cart, set_all_product_ratings, update_product_image_paths
 from flask_login import login_required, current_user
 
 views = Blueprint('views', __name__)
@@ -14,20 +14,19 @@ def store_home():
         
         results = select_products('laptop', 20, sort_by, sort_order)
         products = []
-
         for result in results:
             product = result[0]  # Get the Product object
             product.category_id = result[1]  # Add category_id
             product.category_name = result[2]  # Add category_name
-            product.img_path = f"{product.category_name.lower()}/{product.img_path}"
             products.append(product)
+
     except Exception as e:
         print(f"Error in store_home: {str(e)}")  # Add logging
         # If there's an error, clear the cache and try again
         select_products.cache_clear()
         return redirect(url_for('views.store_home'))
         
-    return render_template("products.html", products=products, 
+    return render_template("products.html", products=products,
                          current_sort=sort_by, 
                          current_order=sort_order)
 
@@ -92,3 +91,7 @@ def cart_count_processor():
     else:
         user_id = None
     return dict(cart_count=get_cart_count(user_id))
+
+def set_product_objects(results: list) -> list:
+    
+    return products
