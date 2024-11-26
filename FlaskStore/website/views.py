@@ -19,7 +19,6 @@ def store_home():
             product = result[0]  # Get the Product object
             product.category_id = result[1]  # Add category_id
             product.category_name = result[2]  # Add category_name
-            # Store the original image path and construct the full URL in the template
             product.img_path = f"{product.category_name.lower()}/{product.img_path}"
             products.append(product)
     except Exception as e:

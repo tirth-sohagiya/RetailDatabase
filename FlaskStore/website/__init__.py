@@ -37,6 +37,7 @@ def create_app():
 
     from .models import User
 
+    # this doesn't work all the time
     @app.context_processor
     def inject_cart_count():
         from .queries import get_cart_count

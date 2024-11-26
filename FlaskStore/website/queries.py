@@ -5,6 +5,7 @@ from sqlalchemy import func
 from flask import session # Using this to help track guest carts
 import uuid # create unique guest ids
 from functools import lru_cache
+import time
 
 def get_password(email):
     # Get password hash for a user by email
@@ -13,6 +14,7 @@ def get_password(email):
 
 #@lru_cache(maxsize=32)
 def select_products(category, num, sort_by='default', sort_order='asc'):
+    start = time.time()
     # Get products in a category, ordered by the specified field
     query = Product.query.with_entities(
         Product,
@@ -27,6 +29,8 @@ def select_products(category, num, sort_by='default', sort_order='asc'):
         query = query.order_by(Product.price.desc() if sort_order == 'desc' else Product.price)
     elif sort_by == 'rating':
         query = query.order_by(Product.rating.desc() if sort_order == 'desc' else Product.rating)
+    end = time.time()
+    print(f"Product Select Query time: {end - start}")
     
     return query.limit(num).all()
 

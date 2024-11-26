@@ -29,7 +29,7 @@ class Product(db.Model):
     img_path = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String(200), nullable=False)
     stock_quantity = db.Column(db.Integer, nullable=False)
-    rating = db.Column(db.Integer, nullable=False)
+    rating = db.Column(db.Float, nullable=False)
     price = db.Column(db.Float, nullable=False)
 
     # Add relationship to category for easier access

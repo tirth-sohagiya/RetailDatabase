@@ -95,15 +95,15 @@ def fake_rating():
                 product_id = randint(FIRSTPRODID, LASTPRODID) # randomly choosing a product that the user rated
                 rand = randint(1, 100) # using this for a weighted prob, users are more likely to leave 5 stars
                 if rand > 50:
-                    stars = 5
+                    stars = 5.0
                 elif rand > 25:
-                    stars = 4
+                    stars = randint(8, 9) / 2  # 4 or 4.5 stars
                 elif rand > 17:
-                    stars = 3
+                    stars = randint(6, 7) / 2  # 3 or 3.5 stars
                 elif rand > 8:
-                    stars = 2
+                    stars = randint(4, 5) / 2  # 2 or 2.5 stars
                 else:
-                    stars = 1
+                    stars = randint(2, 3) / 2  # 1 or 1.5 stars
                 rating_date = fake.date_time()
                 rating_string = f"({user_id}, {product_id}, {stars}, '{rating_date}'),"
                 print(rating_string, file=f)

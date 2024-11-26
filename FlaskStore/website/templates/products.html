@@ -4,21 +4,31 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/products.css') }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 {% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="d-flex justify-content-end mb-4">
         <div class="dropdown">
-            <button class="btn btn-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <button class="btn btn-primary dropdown-toggle d-flex align-items-center gap-2" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-sort-down"></i>
                 Sort By: {{ current_sort|title }} ({{ current_order|upper }})
             </button>
-            <ul class="dropdown-menu" aria-labelledby="sortDropdown">
-                <li><a class="dropdown-item" href="{{ url_for('views.store_home', sort_by='price', sort_order='asc') }}">Price: Low to High</a></li>
-                <li><a class="dropdown-item" href="{{ url_for('views.store_home', sort_by='price', sort_order='desc') }}">Price: High to Low</a></li>
-                <li><a class="dropdown-item" href="{{ url_for('views.store_home', sort_by='rating', sort_order='desc') }}">Rating: High to Low</a></li>
-                <li><a class="dropdown-item" href="{{ url_for('views.store_home', sort_by='rating', sort_order='asc') }}">Rating: Low to High</a></li>
-                <li><a class="dropdown-item" href="{{ url_for('views.store_home') }}">Default</a></li>
+            <ul class="dropdown-menu shadow-lg" aria-labelledby="sortDropdown">
+                <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('views.store_home', sort_by='price', sort_order='asc') }}">
+                    <i class="bi bi-sort-numeric-down"></i>Price: Low to High
+                </a></li>
+                <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('views.store_home', sort_by='price', sort_order='desc') }}">
+                    <i class="bi bi-sort-numeric-up-alt"></i>Price: High to Low
+                </a></li>
+                <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('views.store_home', sort_by='rating', sort_order='desc') }}">
+                    <i class="bi bi-star-fill"></i>Rating: High to Low
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('views.store_home') }}">
+                    <i class="bi bi-arrow-counterclockwise"></i>Default
+                </a></li>
             </ul>
         </div>
     </div>
@@ -32,6 +42,23 @@
                         <div>
                             <h2 class="card-title text-secondary-content">{{ product.name }}</h2>
                             <h5 class="card-text text-neutral-content">{{ product.description }}</h5>
+                            <div class="rating-display mt-2">
+                                <span class="product-rating" style="display: none;">{{ product.rating }}</span>
+                                {% for i in range(5) %}
+                                    {% if product.rating %}
+                                        {% if (product.rating - i) >= 0.95 %}
+                                            <i class="bi bi-star-fill text-warning"></i>
+                                        {% elif (product.rating - i) >= 0.45 %}
+                                            <i class="bi bi-star-half text-warning"></i>
+                                        {% else %}
+                                            <i class="bi bi-star text-warning"></i>
+                                        {% endif %}
+                                    {% else %}
+                                        <i class="bi bi-star text-warning"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                <span class="ms-1 text-muted">({{ "%.1f"|format(product.rating or 0) }})</span>
+                            </div>
                         </div>
                         <div class="flex justify-between items-center gap-1">
                             <h4 class="card-price text-neutral-content mb-0">${{ "%.2f"|format(product.price) }}</h4>
