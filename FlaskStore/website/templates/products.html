@@ -7,72 +7,87 @@
 {% endblock %}
 
 {% block content %}
-<div class="container products-grid">
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-        {% for product in products %}
-        <div class="col product-item">
-            <div class="card bg-base-300 shadow-xl h-full">
-                <img src="{{ product.img_path }}" class="card-img-top" alt="{{ product.name }}" />
-                <div class="card-body flex flex-col justify-between p-6">
-                    <div>
-                        <h2 class="card-title text-secondary-content">{{ product.name }}</h2>
-                        <h5 class="card-text text-neutral-content">{{ product.description }}</h5>
-                    </div>
-                    <div class="flex justify-between items-center gap-1">
-                        <h4 class="card-price text-neutral-content mb-0">${{ "%.2f"|format(product.price) }}</h4>
-                        <button onclick="addToCart({{ product.product_id }})" class="btn btn-primary btn-sm flex items-center justify-center">Add To Cart</button>
+<div class="container">
+    <div class="d-flex justify-content-end mb-4">
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                Sort By: {{ current_sort|title }} ({{ current_order|upper }})
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+                <li><a class="dropdown-item" href="{{ url_for('views.store_home', sort_by='price', sort_order='asc') }}">Price: Low to High</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('views.store_home', sort_by='price', sort_order='desc') }}">Price: High to Low</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('views.store_home', sort_by='rating', sort_order='desc') }}">Rating: High to Low</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('views.store_home', sort_by='rating', sort_order='asc') }}">Rating: Low to High</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('views.store_home') }}">Default</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="products-grid">
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+            {% for product in products %}
+            <div class="col product-item">
+                <div class="card bg-base-300 shadow-xl h-full">
+                    <img src="{{ url_for('static', filename=product.img_path) }}" class="card-img-top" alt="{{ product.name }}" />
+                    <div class="card-body flex flex-col justify-between p-6">
+                        <div>
+                            <h2 class="card-title text-secondary-content">{{ product.name }}</h2>
+                            <h5 class="card-text text-neutral-content">{{ product.description }}</h5>
+                        </div>
+                        <div class="flex justify-between items-center gap-1">
+                            <h4 class="card-price text-neutral-content mb-0">${{ "%.2f"|format(product.price) }}</h4>
+                            <button onclick="addToCart({{ product.product_id }})" class="btn btn-primary btn-sm flex items-center justify-center">Add To Cart</button>
+                        </div>
                     </div>
                 </div>
             </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
-</div>
 
-<script>
-function addToCart(productId) {
-    fetch('/add-to-cart', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            product_id: productId,
-            quantity: 1
+    <script>
+    function addToCart(productId) {
+        fetch('/add-to-cart', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                product_id: productId,
+                quantity: 1
+            })
         })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Update cart count in navbar
-            const cartBadge = document.querySelector('.badge-primary');
-            const cartContainer = document.querySelector('.absolute.-top-2.-right-2');
-            
-            if (data.cart_count > 0) {
-                if (!cartBadge) {
-                    // Create new badge if it doesn't exist
-                    const newBadgeContainer = document.createElement('div');
-                    newBadgeContainer.className = 'absolute -top-2 -right-2';
-                    const newBadge = document.createElement('span');
-                    newBadge.className = 'badge badge-sm badge-primary';
-                    newBadge.textContent = data.cart_count;
-                    newBadgeContainer.appendChild(newBadge);
-                    document.querySelector('.btn-base-content.relative').appendChild(newBadgeContainer);
-                } else {
-                    // Update existing badge
-                    cartBadge.textContent = data.cart_count;
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update cart count in navbar
+                const cartBadge = document.querySelector('.badge-primary');
+                const cartContainer = document.querySelector('.absolute.-top-2.-right-2');
+                
+                if (data.cart_count > 0) {
+                    if (!cartBadge) {
+                        // Create new badge if it doesn't exist
+                        const newBadgeContainer = document.createElement('div');
+                        newBadgeContainer.className = 'absolute -top-2 -right-2';
+                        const newBadge = document.createElement('span');
+                        newBadge.className = 'badge badge-sm badge-primary';
+                        newBadge.textContent = data.cart_count;
+                        newBadgeContainer.appendChild(newBadge);
+                        document.querySelector('.btn-base-content.relative').appendChild(newBadgeContainer);
+                    } else {
+                        // Update existing badge
+                        cartBadge.textContent = data.cart_count;
+                    }
                 }
+                // Show success message
+                alert('Item added to cart!');
+            } else {
+                alert('Error: ' + data.error);
             }
-            // Show success message
-            alert('Item added to cart!');
-        } else {
-            alert('Error: ' + data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error adding item to cart');
-    });
-}
-</script>
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error adding item to cart');
+        });
+    }
+    </script>
 {% endblock %}

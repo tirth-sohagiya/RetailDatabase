@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, jsonify, url_for
+from flask import Blueprint, render_template, request, flash, jsonify, url_for, redirect
 from .queries import select_products, add_to_cart, get_cart_count, get_cart_items, delete_from_cart, set_all_product_ratings
 from flask_login import login_required, current_user
 
@@ -7,16 +7,30 @@ views = Blueprint('views', __name__)
 # products is now the home page
 @views.route('/', methods=['GET', "POST"])
 def store_home():
-    set_all_product_ratings()
-    results = select_products('laptop', 120)
-    products = []
-    for result in results:
-        product = result[0]  # Get the Product object
-        product.category_id = result[1]  # Add category_id
-        product.category_name = result[2]  # Add category_name
-        product.img_path = url_for('static', filename=f"{product.category_name.lower()}/{product.img_path}")
-        products.append(product)
-    return render_template("products.html", products=products)
+    try:
+        # Get sorting parameters from request
+        sort_by = request.args.get('sort_by', 'default')
+        sort_order = request.args.get('sort_order', 'asc')
+        
+        results = select_products('laptop', 20, sort_by, sort_order)
+        products = []
+
+        for result in results:
+            product = result[0]  # Get the Product object
+            product.category_id = result[1]  # Add category_id
+            product.category_name = result[2]  # Add category_name
+            # Store the original image path and construct the full URL in the template
+            product.img_path = f"{product.category_name.lower()}/{product.img_path}"
+            products.append(product)
+    except Exception as e:
+        print(f"Error in store_home: {str(e)}")  # Add logging
+        # If there's an error, clear the cache and try again
+        select_products.cache_clear()
+        return redirect(url_for('views.store_home'))
+        
+    return render_template("products.html", products=products, 
+                         current_sort=sort_by, 
+                         current_order=sort_order)
 
 @views.route('/search', methods=['GET', "POST"])
 def search():

@@ -4,20 +4,31 @@ from .models import User, Product, Cart, Category, Transaction, Rating, Address,
 from sqlalchemy import func 
 from flask import session # Using this to help track guest carts
 import uuid # create unique guest ids
+from functools import lru_cache
 
 def get_password(email):
     # Get password hash for a user by email
     user = User.query.filter_by(email=email).first()
     return user.pass_hash if user else None
 
-def select_products(category, num):
-    # Get products in a category, ordered by popularity
-    return Product.query.with_entities(
+#@lru_cache(maxsize=32)
+def select_products(category, num, sort_by='default', sort_order='asc'):
+    # Get products in a category, ordered by the specified field
+    query = Product.query.with_entities(
         Product,
         Category.category_id,
         Category.category_name.label('category_name')
     ).join(Category, Product.category_id == Category.category_id)\
-    .limit(num).all()
+    .filter(Category.category_name.ilike(f'%{category}%'))\
+    .options(db.joinedload(Product.category))
+
+    # Apply sorting
+    if sort_by == 'price':
+        query = query.order_by(Product.price.desc() if sort_order == 'desc' else Product.price)
+    elif sort_by == 'rating':
+        query = query.order_by(Product.rating.desc() if sort_order == 'desc' else Product.rating)
+    
+    return query.limit(num).all()
 
 def search_products(search_term):
     # Search for products by name or description
@@ -119,4 +130,3 @@ def set_all_product_ratings():
         db.session.query(Product).filter_by(product_id=product.product_id).update({"rating": rating})
         db.session.commit()
         
-    

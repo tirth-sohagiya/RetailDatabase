@@ -11,9 +11,18 @@ auth = Blueprint('auth', __name__)
 @auth.route('/login', methods=['GET', "POST"])
 def login():
     if request.method == 'POST':
+        # Get form data
         email = request.form.get('email')
         password = request.form.get('password1')
         pass_hash = get_password(email)
+
+        # Throws an alert to user that email returned null
+        # check_password_hash throws an error if it receives a none type
+        if not pass_hash:
+            flash("Email or Password does not match an existing user", category='error')
+            return render_template("login.html", current_user=current_user)
+
+        # Checks if password is correct
         if check_password_hash(pass_hash, password):
             flash('Logged In!', category='success')
             login_user(User.query.filter_by(email=email).first(), remember=True)
@@ -24,14 +33,16 @@ def login():
 
 @auth.route('/logout')
 def logout():
+    # flask function that removes the reference to the current user
     logout_user()
     return redirect(url_for('views.store_home'))
 
 @auth.route('/create_account', methods=['GET', "POST"])
-def create_account():   
+def create_account():
     if request.method == 'POST':
         email = request.form.get('email')
-        name = request.form.get('name')
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
         password1 = request.form.get('password1')
         password2 = request.form.get('password2')
 
@@ -40,17 +51,18 @@ def create_account():
             flash('Email already exists.', category='error')
         elif len(email) < 4:
             flash('Email must be at least 4 characters', category='error')
-        elif len(name) < 2:
+        elif len(first_name) < 2 or len(last_name) < 2:
             flash('Name must be at least 2 characters', category='error')
         elif password1 != password2:
             flash('Passwords don\'t match', category='error')
         elif len(password2) < 7:
             flash('Password must be at least 7 characters', category='error')
         else:
-            # create_user is a sql insert query, written in queries.py
             # need to create handling for if a user email already exists
-            User(email=email, name=name, pass_hash=generate_password_hash(password1, method='pbkdf2:sha256')).save()
-            #create_user(email=email, name=name, pass_hash=generate_password_hash(password1, method='pbkdf2:sha256'))
+            new_user = User(email=email, first_name=first_name, last_name=last_name, pass_hash=generate_password_hash(password1, method='pbkdf2:sha256'))
+            db.session.add(new_user)
+            db.session.commit()
+            login_user(new_user, remember=True)
             return redirect(url_for('views.store_home'))
     return render_template("create_account.html")
 
