@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}Account Settings{% endblock %}
+
+{% block content %}
+
+<div class="container mt-24 mb-12">
+    <div class="max-w-4xl mx-auto space-y-6">
+        <!-- Profile Information -->
+        <div class="card bg-base-300 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-secondary-content text-2xl mb-4">Profile Information</h2>
+                <form action="{{ url_for('auth.account_settings') }}" method="POST" class="space-y-4">
+                    <input type="hidden" name="action" value="update_profile">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-control bg-base-200">
+                            <label class="label">
+                                <span class="label-text text-secondary-content">First Name</span>
+                            </label>
+                            <input type="text" name="first_name" class="input input-bordered text-secondary-content" value="{{ current_user.first_name }}" required>
+                        </div>
+                        <div class="form-control bg-base-200">
+                            <label class="label">
+                                <span class="label-text text-secondary-content">Last Name</span>
+                            </label>
+                            <input type="text" name="last_name" class="input input-bordered text-secondary-content" value="{{ current_user.last_name }}" required>
+                        </div>
+                    </div>
+                    <div class="form-control bg-base-200">
+                        <label class="label">
+                            <span class="label-text text-secondary-content">Email</span>
+                        </label>
+                        <input type="email" name="email" class="input input-bordered text-secondary-content" value="{{ current_user.email }}" required>
+                    </div>
+                    <div class="card-actions justify-end">
+                        <button type="submit" class="btn btn-primary">Update Profile</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Change Password -->
+        <div class="card bg-base-300 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-secondary-content text-2xl mb-4">Change Password</h2>
+                <form action="{{ url_for('auth.account_settings') }}" method="POST" class="space-y-4">
+                    <input type="hidden" name="action" value="change_password">
+                    <div class="form-control bg-base-200">
+                        <label class="label">
+                            <span class="label-text text-secondary-content">Current Password</span>
+                        </label>
+                        <input type="password" name="current_password" class="input input-bordered text-secondary-content" required>
+                    </div>
+                    <div class="form-control bg-base-200">
+                        <label class="label">
+                            <span class="label-text text-secondary-content">New Password</span>
+                        </label>
+                        <input type="password" name="new_password" class="input input-bordered text-secondary-content" required>
+                    </div>
+                    <div class="form-control bg-base-200">
+                        <label class="label">
+                            <span class="label-text text-secondary-content">Confirm New Password</span>
+                        </label>
+                        <input type="password" name="confirm_password" class="input input-bordered text-secondary-content" required>
+                    </div>
+                    <div class="card-actions justify-end">
+                        <button type="submit" class="btn btn-primary">Change Password</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Addresses -->
+        <div class="card bg-base-300 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-secondary-content text-2xl mb-4">Addresses</h2>
+                
+                <!-- Existing Addresses -->
+                {% if addresses %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    {% for address in addresses %}
+                    <div class="card bg-base-200">
+                        <div class="card-body">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p>{{ address.street }}</p>
+                                    <p>{{ address.city }}, {{ address.state }} {{ address.zip_code }}</p>
+                                    {% if address.is_default %}
+                                    <span class="badge badge-primary mt-2">Default</span>
+                                    {% endif %}
+                                </div>
+                                <button class="btn btn-square btn-sm btn-ghost">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Add New Address -->
+                <form action="{{ url_for('auth.account_settings') }}" method="POST" class="space-y-4">
+                    <input type="hidden" name="action" value="add_address">
+                    <div class="form-control bg-base-200">
+                        <label class="label">
+                            <span class="label-text">Street Address</span>
+                        </label>
+                        <input type="text" name="street" class="input input-bordered" required>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="form-control bg-base-200">
+                            <label class="label">
+                                <span class="label-text">City</span>
+                            </label>
+                            <input type="text" name="city" class="input input-bordered" required>
+                        </div>
+                        <div class="form-control bg-base-200">
+                            <label class="label">
+                                <span class="label-text">State</span>
+                            </label>
+                            <input type="text" name="state" class="input input-bordered" required>
+                        </div>
+                        <div class="form-control bg-base-200">
+                            <label class="label">
+                                <span class="label-text">ZIP Code</span>
+                            </label>
+                            <input type="text" name="zip_code" class="input input-bordered" required>
+                        </div>
+                    </div>
+                    <div class="form-control bg-base-200">
+                        <label class="label cursor-pointer justify-start gap-4">
+                            <input type="checkbox" name="is_default" class="checkbox">
+                            <span class="label-text">Set as default address</span>
+                        </label>
+                    </div>
+                    <div class="card-actions justify-end">
+                        <button type="submit" class="btn btn-primary">Add Address</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Payment Methods -->
+        <div class="card bg-base-300 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-secondary-content text-2xl mb-4">Payment Methods</h2>
+                
+                <!-- Existing Payment Methods -->
+                {% if payment_methods %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    {% for payment in payment_methods %}
+                    <div class="card bg-base-200">
+                        <div class="card-body">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        {% if payment.card_brand.lower() == 'visa' %}
+                                        <i class="bi bi-credit-card-2-front text-2xl"></i>
+                                        {% elif payment.card_brand.lower() == 'mastercard' %}
+                                        <i class="bi bi-credit-card text-2xl"></i>
+                                        {% else %}
+                                        <i class="bi bi-credit-card-fill text-2xl"></i>
+                                        {% endif %}
+                                        <span class="font-semibold">{{ payment.card_brand }}</span>
+                                    </div>
+                                    <p class="mt-1">•••• •••• •••• {{ payment.card_last_four }}</p>
+                                    <p class="text-sm">Expires: {{ payment.expiration }}</p>
+                                    {% if payment.is_default %}
+                                    <span class="badge badge-primary mt-2">Default</span>
+                                    {% endif %}
+                                </div>
+                                <button class="btn btn-square btn-sm btn-ghost">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Add New Payment Method -->
+                <form action="{{ url_for('auth.account_settings') }}" method="POST" class="space-y-4">
+                    <input type="hidden" name="action" value="add_payment">
+                    <div class="form-control bg-base-200">
+                        <label class="label">
+                            <span class="label-text">Card Number</span>
+                        </label>
+                        <input type="text" name="card_number" class="input text-secondary-content" required pattern="[0-9]{16}" title="Please enter a valid 16-digit card number">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-control bg-base-200">
+                            <label class="label">
+                                <span class="label-text">Expiration (MM/YY)</span>
+                            </label>
+                            <input type="text" name="expiration" class="input text-secondary-content" required pattern="(0[1-9]|1[0-2])\/([0-9]{2})" title="Please enter a valid expiration date (MM/YY)">
+                        </div>
+                        <div class="form-control bg-base-200">
+                            <label class="label">
+                                <span class="label-text">Card Brand</span>
+                            </label>
+                            <select name="card_brand" class="select text-secondary-content" required>
+                                <option value="">Select card brand</option>
+                                <option value="Visa">Visa</option>
+                                <option value="Mastercard">Mastercard</option>
+                                <option value="American Express">American Express</option>
+                                <option value="Discover">Discover</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-control bg-base-200">
+                        <label class="label cursor-pointer justify-start gap-4">
+                            <input type="checkbox" name="is_default" class="checkbox">
+                            <span class="label-text">Set as default payment method</span>
+                        </label>
+                    </div>
+                    <div class="card-actions justify-end">
+                        <button type="submit" class="btn btn-primary">Add Payment Method</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .form-control {
+        border: none !important;
+        border-radius: 0.5rem;
+    }
+    .form-control:focus-within {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+</style>
+{% endblock %}
