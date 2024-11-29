@@ -83,6 +83,17 @@ def remove_from_cart():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@views.route('/checkout', methods=['GET', "POST"])
+def checkout():
+    if request.method == 'POST':
+        # Get form data
+        payment_id = request.form.get('payment_id')
+        billing_address_id = request.form.get('billing_address_id')
+        shipping_address_id = request.form.get('shipping_address_id')
+        create_order_transaction(current_user.id, payment_id, billing_address_id, shipping_address_id)
+        flash('Order has been placed successfully!', category='success')
+        return redirect(url_for('views.store_home'))
+
 @views.context_processor
 def cart_count_processor():
     """Add cart count to all templates"""
@@ -91,7 +102,3 @@ def cart_count_processor():
     else:
         user_id = None
     return dict(cart_count=get_cart_count(user_id))
-
-def set_product_objects(results: list) -> list:
-    
-    return products

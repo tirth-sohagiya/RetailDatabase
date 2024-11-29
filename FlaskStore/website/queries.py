@@ -156,3 +156,22 @@ def set_all_product_ratings():
         rating = db.session.query(func.avg(Rating.stars)).filter_by(product_id=product.product_id).scalar()
         db.session.query(Product).filter_by(product_id=product.product_id).update({"rating": rating})
         db.session.commit()
+
+def create_order_transaction(user_id, payment_id, billing_address_id, shipping_address_id):
+    order = Order(user_id=user_id, address_id = shipping_address_id)
+    # ToDo: create order number
+    transaction = Transaction(order_id = order.order_id, payment_id = payment_id, billing_address_id = billing_address_id)
+
+    # need to lock cart table here, we can't allow users to add items to the cart while an order is being created
+    # pulling in all items from user's cart and adding them to the order
+    cart_items = get_cart_items(user_id)
+    for item in cart_items:
+        order_item = OrderItem(order_id = order.order_id, product_id = item[4], quantity = item[3], unit_price = item[1])
+        db.session.add(order_item)
+    # unlock cart table here
+    # after the order items are added, clear the cart
+    clear_cart(user_id)
+    # commiting changes to the database
+    db.session.add(transaction)
+    db.session.add(order)
+    db.session.commit()
