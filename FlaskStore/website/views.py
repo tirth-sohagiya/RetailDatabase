@@ -61,9 +61,18 @@ def add_to_cart_route():
             user_id = None
         add_to_cart(user_id, product_id, quantity)
         cart_count = get_cart_count(user_id)
-        return jsonify({'message': 'Item added to cart', 'cart_count': cart_count}), 200
+        print("Cart count:", cart_count)
+        return jsonify({
+            'success': True,
+            'message': 'Item added to cart', 
+            'cart_count': cart_count
+        }), 200
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print("Error adding to cart:", e)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @views.route('/remove-from-cart', methods=['POST'])
 def remove_from_cart():
@@ -79,7 +88,10 @@ def remove_from_cart():
             delete_from_cart(product_id, current_user.id)
         else:
             delete_from_cart(product_id)
-        return jsonify({'message': 'Item deleted from cart'}), 200
+        return jsonify({
+            'success': True,
+            'message': 'Item removed from cart'
+        }), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

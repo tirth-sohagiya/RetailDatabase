@@ -67,8 +67,6 @@
 
 <script>
 function removeFromCart(product_id) {
-    alert('Deleting Item');
-    // TODO: Implement remove from cart functionality
     console.log("Removing product:", product_id);
     fetch('/remove-from-cart', {
         method: 'POST',
@@ -89,7 +87,7 @@ function removeFromCart(product_id) {
             } else {
                 alert('Error:', cartItem)
             }
-            // Optionally, update the total price and cart count
+            // Update the total price and cart count
             updateCartSummary();
         } else {
             alert('Error: ' + data.error);
