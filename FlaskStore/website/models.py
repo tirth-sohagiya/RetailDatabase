@@ -2,6 +2,7 @@ from . import db
 from sqlalchemy.sql import func
 from flask_login import UserMixin
 from enum import Enum
+from sqlalchemy import Enum as SQLAlchemyEnum
 
 ## Some of the classes need editing
 
@@ -79,13 +80,6 @@ class Rating(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
     rating_date = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
-class OrderStatus(str, Enum):
-    PENDING = 'pending'
-    PROCESSING = 'processing'
-    SHIPPED = 'shipped'
-    DELIVERED = 'delivered'
-    CANCELLED = 'cancelled'
-
 class Order(db.Model):
     __tablename__ = 'customer_order'
     order_id = db.Column(db.Integer, primary_key=True)
@@ -93,7 +87,7 @@ class Order(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
     address_id = db.Column(db.Integer, db.ForeignKey('address.address_id'), nullable=False)
     order_date = db.Column(db.DateTime(timezone=True), server_default=func.now())
-    status = db.Column(db.Enum(OrderStatus), nullable=False, default=OrderStatus.PENDING)
+    status = db.Column(db.String(20), nullable=False, default="pending")
     
     # Relationships
     items = db.relationship('OrderItem', backref='order', lazy=True)
@@ -148,7 +142,7 @@ class Transaction(db.Model):
     billing_address_id = db.Column(db.Integer, db.ForeignKey('address.address_id'), nullable=False)
     external_transaction_id = db.Column(db.String(100), nullable=False)
     transaction_time = db.Column(db.DateTime(timezone=True), server_default=func.now())
-    amount = db.Column(db.Float, nullable=False)  # Amount processed in this transaction
+    amount = db.Column(db.Float, nullable=False, default=0.00)  # Amount processed in this transaction
 
     # Relationships
     payment = db.relationship('Payment', backref='transactions', lazy=True)

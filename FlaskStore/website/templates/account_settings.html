@@ -81,7 +81,7 @@
                     {% for address in addresses %}
                     <div class="card bg-base-200">
                         <div class="card-body">
-                            <div class="flex justify-between items-start">
+                            <div class="flex justify-between items-start text-secondary-content">
                                 <div>
                                     <p>{{ address.street_address }}</p>
                                     <p>{{ address.city }}, {{ address.state }} {{ address.zip_code }}</p>
@@ -106,26 +106,26 @@
                         <label class="label">
                             <span class="label-text">Street Address</span>
                         </label>
-                        <input type="text" name="street" class="input input-bordered" required>
+                        <input type="text" name="street" class="input input-bordered text-secondary-content" required>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div class="form-control bg-base-200">
                             <label class="label">
-                                <span class="label-text">City</span>
+                                <span class="label-text text-secondary-content">City</span>
                             </label>
-                            <input type="text" name="city" class="input input-bordered" required>
+                            <input type="text" name="city" class="input input-bordered text-secondary-content" required>
                         </div>
                         <div class="form-control bg-base-200">
                             <label class="label">
-                                <span class="label-text">State</span>
+                                <span class="label-text text-secondary-content">State</span>
                             </label>
-                            <input type="text" name="state" class="input input-bordered" required>
+                            <input type="text" name="state" class="input input-bordered text-secondary-content" required>
                         </div>
                         <div class="form-control bg-base-200">
                             <label class="label">
-                                <span class="label-text">ZIP Code</span>
+                                <span class="label-text text-secondary-content">ZIP Code</span>
                             </label>
-                            <input type="text" name="zip_code" class="input input-bordered" required>
+                            <input type="text" name="zip_code" class="input input-bordered text-secondary-content" required>
                         </div>
                     </div>
                     <div class="form-control bg-base-200">
@@ -152,7 +152,7 @@
                     {% for payment in payment_methods %}
                     <div class="card bg-base-200">
                         <div class="card-body">
-                            <div class="flex justify-between items-start">
+                            <div class="flex justify-between items-start text-secondary-content">
                                 <div>
                                     <div class="flex items-center gap-2">
                                         {% if payment.card_brand.lower() == 'visa' %}

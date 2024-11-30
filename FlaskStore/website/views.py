@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, flash, jsonify, url_for, redirect
-from .queries import select_products, add_to_cart, get_cart_count, get_cart_items, delete_from_cart, set_all_product_ratings, update_product_image_paths
+from .queries import select_products, add_to_cart, get_cart_count, get_cart_items, delete_from_cart,\
+set_all_product_ratings, get_addresses, get_payments, create_order_transaction
 from flask_login import login_required, current_user
 
 views = Blueprint('views', __name__)
@@ -61,9 +62,18 @@ def add_to_cart_route():
             user_id = None
         add_to_cart(user_id, product_id, quantity)
         cart_count = get_cart_count(user_id)
-        return jsonify({'message': 'Item added to cart', 'cart_count': cart_count}), 200
+        print("Cart count:", cart_count)
+        return jsonify({
+            'success': True,
+            'message': 'Item added to cart', 
+            'cart_count': cart_count
+        }), 200
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print("Error adding to cart:", e)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @views.route('/remove-from-cart', methods=['POST'])
 def remove_from_cart():
@@ -79,29 +89,55 @@ def remove_from_cart():
             delete_from_cart(product_id, current_user.id)
         else:
             delete_from_cart(product_id)
-        return jsonify({'message': 'Item deleted from cart'}), 200
+        return jsonify({
+            'success': True,
+            'message': 'Item removed from cart'
+        }), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 # upon deciding to checkout, we need to lock the user's cart so that they can't add more items in another tab or session
 # then serve them the checkout page that allows them to select payment method/addresses
 # need an unlocking procedure if they bail on the checkout
+# finalize checkout occurs after user has selected payment method/addresses
+# we will create the order and transaction records from the cart
 @views.route('/checkout', methods=['GET', 'POST'])
+@login_required
 def checkout():
+    if request.method == 'GET':
+        return render_template("checkout.html", cart_items=get_cart_items(current_user.id), 
+        addresses=get_addresses(current_user.id), payment_methods=get_payments(current_user.id))
+
     if request.method == 'POST':
         # Get form data
+        for entry in request.form:
+            print(entry, request.form.get(entry))
         payment_id = request.form.get('payment_id')
         billing_address_id = request.form.get('billing_address_id')
         shipping_address_id = request.form.get('shipping_address_id')
+
+        if shipping_address_id is 'new':
+            # add address to the database
+            # get generated address id from database
+            pass
+        
+        if payment_id is 'new':
+            # add payment method to the database
+            # get generated payment id from database
+            pass
+
+        # If we received no billing address ID, we assume it's the same as shipping
+        if billing_address_id is None:
+            billing_address_id = shipping_address_id
+
+        # print("Payment ID:", payment_id)
+        # print("Billing Address ID:", billing_address_id)
+        # print("Shipping Address ID:", shipping_address_id)
+
+
         create_order_transaction(current_user.id, payment_id, billing_address_id, shipping_address_id)
         flash('Order has been placed successfully!', category='success')
         return redirect(url_for('views.store_home'))
-
-# finalize checkout occurs after user has selected payment method/addresses
-# we will create the order and transaction records from the cart
-@views.route('/finalize-checkout', methods=["POST"])
-def finalize_checkout():
-    pass
 
 @views.context_processor
 def cart_count_processor():

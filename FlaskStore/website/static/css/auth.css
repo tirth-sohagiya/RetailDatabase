@@ -22,3 +22,11 @@
 .card-body {
     padding: 2.5rem;
 }
+.input:focus {
+    background-color: hsl(var(--b2)) !important;
+    color: hsl(var(--sc)) !important;
+    box-shadow: none !important;
+}
+.label-text {
+    color: hsl(var(--sc)) !important;
+}

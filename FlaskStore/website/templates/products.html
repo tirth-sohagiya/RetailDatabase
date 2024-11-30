@@ -85,6 +85,7 @@
         })
         .then(response => response.json())
         .then(data => {
+            console.log("Response data:", data);
             if (data.success) {
                 // Update cart count in navbar
                 const cartBadge = document.querySelector('.badge-primary');
@@ -105,8 +106,6 @@
                         cartBadge.textContent = data.cart_count;
                     }
                 }
-                // Show success message
-                alert('Item added to cart!');
             } else {
                 alert('Error: ' + data.error);
             }
