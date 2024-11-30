@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, flash, jsonify, url_for, redirect
-from .queries import select_products, add_to_cart, get_cart_count, get_cart_items, delete_from_cart, set_all_product_ratings, update_product_image_paths
+from .queries import select_products, add_to_cart, get_cart_count, get_cart_items, delete_from_cart,\
+set_all_product_ratings, get_addresses, get_payments, create_order_transaction
 from flask_login import login_required, current_user
 
 views = Blueprint('views', __name__)
@@ -98,8 +99,13 @@ def remove_from_cart():
 # upon deciding to checkout, we need to lock the user's cart so that they can't add more items in another tab or session
 # then serve them the checkout page that allows them to select payment method/addresses
 # need an unlocking procedure if they bail on the checkout
+# finalize checkout occurs after user has selected payment method/addresses
+# we will create the order and transaction records from the cart
 @views.route('/checkout', methods=['GET', 'POST'])
 def checkout():
+    if request.method == 'GET':
+        return render_template("checkout.html", cart_items=get_cart_items(current_user.id), 
+        addresses=get_addresses(current_user.id), payment_methods=get_payments(current_user.id))
     if request.method == 'POST':
         # Get form data
         payment_id = request.form.get('payment_id')
@@ -108,12 +114,6 @@ def checkout():
         create_order_transaction(current_user.id, payment_id, billing_address_id, shipping_address_id)
         flash('Order has been placed successfully!', category='success')
         return redirect(url_for('views.store_home'))
-
-# finalize checkout occurs after user has selected payment method/addresses
-# we will create the order and transaction records from the cart
-@views.route('/finalize-checkout', methods=["POST"])
-def finalize_checkout():
-    pass
 
 @views.context_processor
 def cart_count_processor():

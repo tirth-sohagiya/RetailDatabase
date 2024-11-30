@@ -50,9 +50,18 @@
                             <h5 class="mb-0 text-secondary-content">Total</h5>
                             <h5 class="mb-0" id="cart-total text-secondary-content">${{ "%.2f"|format(cart_items|sum(attribute='price')|float) }}</h5>
                         </div>
+                        {% if current_user.is_authenticated %}
                         <div class="text-end mt-3">
-                            <button class="btn btn-primary" type="button">Proceed to Checkout</button>
+                            <a href="{{ url_for('views.checkout') }}" class="btn btn-primary">Proceed to Checkout</a>
                         </div>
+                        {% else %}
+                        <div class="text-end mt-3">
+                            <a href="{{ url_for('auth.login') }}" class="link link-primary">Sign in</a>
+                            <span class="text-secondary-content">or</span>
+                            <a href="{{ url_for('auth.create_account') }}" class="link link-primary">create an account</a>
+                            <span class="text-secondary-content">to checkout</span>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>

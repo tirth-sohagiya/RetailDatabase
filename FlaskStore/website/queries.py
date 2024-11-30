@@ -12,6 +12,14 @@ def get_password(email):
     user = User.query.filter_by(email=email).first()
     return user.pass_hash if user else None
 
+def get_addresses(user_id):
+    # Get all addresses for a user
+    return Address.query.filter_by(user_id=user_id).all()
+
+def get_payments(user_id):
+    # Get all payments for a user
+    return Payment.query.filter_by(user_id=user_id).all()
+
 @lru_cache(maxsize=32)
 def select_products(category, num, sort_by='default', sort_order='asc'):
     start = time.time()
@@ -62,7 +70,6 @@ def update_product_image_paths():
         return False
 
 def get_session_id():
-    
     if 'cart_session_id' not in session:
         new_session_id = str(uuid.uuid4())
         # Find a unique session ID
@@ -74,9 +81,7 @@ def get_session_id():
     return session['cart_session_id']
 
 def add_to_cart(user_id, product_id, quantity=1):
-    """
-    Add an item to cart. If user is logged in, use user_id, else use session
-    """
+    """Add an item to cart. If user is logged in, use user_id, else use session"""
     if quantity <= 0:
         raise ValueError("Quantity must be greater than 0")
     if user_id:  # Logged in user
