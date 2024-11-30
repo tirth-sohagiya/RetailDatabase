@@ -6,12 +6,6 @@ import pymysql.cursors
 
 db = SQLAlchemy()
 DB_NAME = "SimpleStore"
-# connection = pymysql.connect(host='localhost',
-#                              user='root',
-#                              password='root',
-#                              database='test',
-#                              charset='utf8mb4',
-#                              cursorclass=pymysql.cursors.DictCursor)
 login_manager = LoginManager()
                              
 def create_app():

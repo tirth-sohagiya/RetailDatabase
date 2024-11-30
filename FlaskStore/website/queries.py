@@ -157,10 +157,16 @@ def set_all_product_ratings():
         db.session.query(Product).filter_by(product_id=product.product_id).update({"rating": rating})
         db.session.commit()
 
+def get_order_history(user_id):
+    orders = Order.query.filter_by(user_id=user_id).order_by(Order.order_date.desc()).all()
+    return orders
+
+# creates the order, order_item, and transaction records for the order at checkout
 def create_order_transaction(user_id, payment_id, billing_address_id, shipping_address_id):
     order = Order(user_id=user_id, address_id = shipping_address_id)
     # ToDo: create order number
     transaction = Transaction(order_id = order.order_id, payment_id = payment_id, billing_address_id = billing_address_id)
+    # ToDo: create external transaction id
 
     # need to lock cart table here, we can't allow users to add items to the cart while an order is being created
     # pulling in all items from user's cart and adding them to the order
@@ -168,6 +174,7 @@ def create_order_transaction(user_id, payment_id, billing_address_id, shipping_a
     for item in cart_items:
         order_item = OrderItem(order_id = order.order_id, product_id = item[4], quantity = item[3], unit_price = item[1])
         db.session.add(order_item)
+        transaction.amount += order_item.unit_price * order_item.quantity
     # unlock cart table here
     # after the order items are added, clear the cart
     clear_cart(user_id)

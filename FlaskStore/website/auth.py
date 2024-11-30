@@ -1,9 +1,9 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from .models import User, Address, Payment
 from werkzeug.security import generate_password_hash, check_password_hash
-from . import db, login_manager   #means from __init__.py import db connection
+from . import db, login_manager
 from flask_login import login_manager, login_user, login_required, logout_user, current_user
-from .queries import get_password
+from .queries import get_password, get_order_history
 
 
 auth = Blueprint('auth', __name__)
@@ -123,10 +123,10 @@ def account_settings():
             
             new_address = Address(
                 user_id=current_user.user_id,
-                street=street,
+                street_address=street,
                 city=city,
                 state=state,
-                zip_code=zip_code,
+                zip=zip_code,
                 is_default=is_default
             )
             db.session.add(new_address)
@@ -144,8 +144,6 @@ def account_settings():
                 # Set all other payment methods to non-default
                 Payment.query.filter_by(user_id=current_user.user_id, is_default=True).update({'is_default': False})
             
-            # In a real application, you would want to use proper encryption for card numbers
-            # This is just a simplified example
             new_payment = Payment(
                 user_id=current_user.user_id,
                 payment_type='credit',
@@ -159,7 +157,7 @@ def account_settings():
             db.session.commit()
             flash('Payment method added successfully!', category='success')
             
-    # Get user's addresses and payment methods for display
+    # Get user's addresses and payment methods for display, should refactor to put queries in queries.py
     addresses = Address.query.filter_by(user_id=current_user.user_id).all()
     payment_methods = Payment.query.filter_by(user_id=current_user.user_id).all()
     
@@ -169,3 +167,9 @@ def account_settings():
         addresses=addresses,
         payment_methods=payment_methods
     )
+
+@auth.route('/account/order-history', methods=['GET', 'POST'])
+@login_required
+def order_history():
+    orders = get_order_history(current_user.id)
+    return render_template("order_history.html", current_user=current_user, orders=orders)

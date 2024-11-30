@@ -5,7 +5,7 @@ from flask_login import login_required, current_user
 views = Blueprint('views', __name__)
 
 # products is now the home page
-@views.route('/', methods=['GET', "POST"])
+@views.route('/', methods=['GET', 'POST'])
 def store_home():
     try:
         # Get sorting parameters from request
@@ -83,7 +83,10 @@ def remove_from_cart():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@views.route('/checkout', methods=['GET', "POST"])
+# upon deciding to checkout, we need to lock the user's cart so that they can't add more items in another tab or session
+# then serve them the checkout page that allows them to select payment method/addresses
+# need an unlocking procedure if they bail on the checkout
+@views.route('/checkout', methods=['GET', 'POST'])
 def checkout():
     if request.method == 'POST':
         # Get form data
@@ -93,6 +96,12 @@ def checkout():
         create_order_transaction(current_user.id, payment_id, billing_address_id, shipping_address_id)
         flash('Order has been placed successfully!', category='success')
         return redirect(url_for('views.store_home'))
+
+# finalize checkout occurs after user has selected payment method/addresses
+# we will create the order and transaction records from the cart
+@views.route('/finalize-checkout', methods=["POST"])
+def finalize_checkout():
+    pass
 
 @views.context_processor
 def cart_count_processor():
