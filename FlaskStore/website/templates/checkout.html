@@ -19,7 +19,7 @@
                                 <div class="flex items-start gap-4">
                                     <input type="radio" 
                                            name="shipping_address_id" 
-                                           value="{{ address.id }}"
+                                           value="{{ address.address_id }}"
                                            class="radio radio-primary mt-1"
                                            {% if address.is_default %}checked{% endif %}
                                            required>
@@ -200,7 +200,7 @@
                                 <div class="flex items-start gap-4">
                                     <input type="radio" 
                                            name="payment_id" 
-                                           value="{{ payment.id }}"
+                                           value="{{ payment.payment_id }}"
                                            class="radio radio-primary mt-1"
                                            {% if payment.is_default %}checked{% endif %}
                                            required>

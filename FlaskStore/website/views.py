@@ -102,15 +102,39 @@ def remove_from_cart():
 # finalize checkout occurs after user has selected payment method/addresses
 # we will create the order and transaction records from the cart
 @views.route('/checkout', methods=['GET', 'POST'])
+@login_required
 def checkout():
     if request.method == 'GET':
         return render_template("checkout.html", cart_items=get_cart_items(current_user.id), 
         addresses=get_addresses(current_user.id), payment_methods=get_payments(current_user.id))
+
     if request.method == 'POST':
         # Get form data
+        for entry in request.form:
+            print(entry, request.form.get(entry))
         payment_id = request.form.get('payment_id')
         billing_address_id = request.form.get('billing_address_id')
         shipping_address_id = request.form.get('shipping_address_id')
+
+        if shipping_address_id is 'new':
+            # add address to the database
+            # get generated address id from database
+            pass
+        
+        if payment_id is 'new':
+            # add payment method to the database
+            # get generated payment id from database
+            pass
+
+        # If we received no billing address ID, we assume it's the same as shipping
+        if billing_address_id is None:
+            billing_address_id = shipping_address_id
+
+        # print("Payment ID:", payment_id)
+        # print("Billing Address ID:", billing_address_id)
+        # print("Shipping Address ID:", shipping_address_id)
+
+
         create_order_transaction(current_user.id, payment_id, billing_address_id, shipping_address_id)
         flash('Order has been placed successfully!', category='success')
         return redirect(url_for('views.store_home'))
