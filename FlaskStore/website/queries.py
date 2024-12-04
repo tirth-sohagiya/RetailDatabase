@@ -170,9 +170,10 @@ def set_all_product_ratings():
         db.session.commit()
 
 def get_order_history(user_id):
-    orders = db.session.query(Order, Transaction.amount)\
-        .join(Transaction, Order.order_id == Transaction.order_id)\
-        .filter(Order.user_id == user_id)\
+    """ Gets all orders for a user
+        This will implicitly get the order_items and transactions due to the relationships in models.py"""
+    orders = db.session.query(Order)\
+        .filter_by(user_id=user_id)\
         .order_by(Order.order_date.desc())\
         .all()
     return orders
@@ -239,6 +240,3 @@ def search_products(search_term, sort_by='default', sort_order='asc'):
     except Exception as e:
         print(f"Error in search_products: {str(e)}")
         return []
-
-def get_img_path(product_id):
-    return db.session.query(Product.img_path).filter_by(product_id=product_id).first()
