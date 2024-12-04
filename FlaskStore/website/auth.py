@@ -3,7 +3,7 @@ from .models import User, Address, Payment
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db, login_manager
 from flask_login import login_manager, login_user, login_required, logout_user, current_user
-from .queries import get_password, get_order_history, transfer_cart_login, transfer_cart_signup
+from .queries import get_password, get_order_history, transfer_cart_login, transfer_cart_signup, get_img_path
 
 
 auth = Blueprint('auth', __name__)
@@ -170,8 +170,35 @@ def account_settings():
         payment_methods=payment_methods
     )
 
+@auth.route('/account/settings/delete-address')
+@login_required
+def delete_address():
+    """Used to delete an address in the account settings page"""
+    address_id = request.args.get('address_id')
+    Address.query.filter_by(address_id=address_id).delete()
+    db.session.commit()
+    return redirect(url_for('auth.account_settings'))
+
+@auth.route('/account/settings/delete-payment')
+@login_required
+def delete_payment():
+    """Used to delete a payment method in the account settings page"""
+    payment_id = request.args.get('payment_id')
+    Payment.query.filter_by(payment_id=payment_id).delete()
+    db.session.commit()
+    return redirect(url_for('auth.account_settings'))
+
 @auth.route('/account/order-history', methods=['GET', 'POST'])
 @login_required
 def order_history():
-    orders = get_order_history(current_user.id)
+    order_data = get_order_history(current_user.id)
+    # we only store amounts in the transaction table so need to split these
+    orders = []
+    for item in order_data:
+        order = item[0]
+        order.amount = item[1]
+        print(order.items[0].product.img_path)
+        #order.items.img_path = get_img_path(order.item.product_id)
+        orders.append(order)
+
     return render_template("order_history.html", current_user=current_user, orders=orders)

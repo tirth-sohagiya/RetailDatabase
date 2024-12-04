@@ -170,12 +170,18 @@ def set_all_product_ratings():
         db.session.commit()
 
 def get_order_history(user_id):
-    orders = Order.query.filter_by(user_id=user_id).order_by(Order.order_date.desc()).all()
+    orders = db.session.query(Order, Transaction.amount)\
+        .join(Transaction, Order.order_id == Transaction.order_id)\
+        .filter(Order.user_id == user_id)\
+        .order_by(Order.order_date.desc())\
+        .all()
     return orders
 
 # creates the order, order_item, and transaction records for the order at checkout
 def create_order_transaction(user_id, payment_id, billing_address_id, shipping_address_id):
     order = Order(user_id=user_id, address_id = shipping_address_id)
+    db.session.add(order)
+    db.session.commit()
     # ToDo: create order number
     transaction = Transaction(order_id = order.order_id, payment_id = payment_id, billing_address_id = billing_address_id, amount = 0.00)
     # ToDo: create external transaction id
@@ -192,11 +198,11 @@ def create_order_transaction(user_id, payment_id, billing_address_id, shipping_a
     # unlock cart table here
     # after the order items are added, clear the cart
     clear_cart(user_id)
+    print("transaction:", transaction)
+    print("order:", order)
     # commiting changes to the database
     db.session.add(transaction)
-    db.session.add(order)
     db.session.commit()
-
 def search_products(search_term, sort_by='default', sort_order='asc'):
     """
     Search for products by name, description, or category.
@@ -233,3 +239,6 @@ def search_products(search_term, sort_by='default', sort_order='asc'):
     except Exception as e:
         print(f"Error in search_products: {str(e)}")
         return []
+
+def get_img_path(product_id):
+    return db.session.query(Product.img_path).filter_by(product_id=product_id).first()

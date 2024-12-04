@@ -136,20 +136,19 @@ def checkout():
         shipping_address_id = request.form.get('shipping_address_id')
         print("shipping_address_id:", shipping_address_id)
 
+        # If the user submitted a new address during checkout, add it to the database
         if shipping_address_id == 'new':
-            # add address to the database
-            new_address = Address(user_id=current_user.id, street_address=request.form.get('street_address'), city=request.form.get('city'), state=request.form.get('state'), zip=request.form.get('zip_code'))
-            print(new_address.address_id)
+            new_address = Address(user_id=current_user.id, street_address=request.form.get('street'), city=request.form.get('city'), state=request.form.get('state'), zip=request.form.get('zip_code'))
             db.session.add(new_address)
             db.session.commit()
-            # get generated address id from database
             shipping_address_id = new_address.address_id
 
-        
+        # If the user submitted a new payment method during checkout, add it to the database
         if payment_id == 'new':
-            # add payment method to the database
-            # get generated payment id from database
-            pass
+            new_payment = Payment(user_id=current_user.id, card_number=request.form.get('card_number'), exp_date=request.form.get('exp_date'), cvv=request.form.get('cvv'))
+            db.session.add(new_payment)
+            db.session.commit()
+            payment_id = new_payment.payment_id
 
         # If we received no billing address ID, we assume it's the same as shipping
         # if the billing address is a new address, we need to add it to the database
@@ -157,14 +156,14 @@ def checkout():
             billing_address_id = shipping_address_id
         elif billing_address_id == 'new':
             # add billing address to the database
-            # get generated billing address id from database
-            pass
+            new_address = Address(user_id=current_user.id, street_address=request.form.get('billing_street'), city=request.form.get('billing_city'), state=request.form.get('billing_state'), zip=request.form.get('billing_zip'))
+            db.session.add(new_address)
+            db.session.commit()
+            billing_address_id = new_address.address_id
 
         # print("Payment ID:", payment_id)
         # print("Billing Address ID:", billing_address_id)
         # print("Shipping Address ID:", shipping_address_id)
-
-
         create_order_transaction(current_user.id, payment_id, billing_address_id, shipping_address_id)
         flash('Order has been placed successfully!', category='success')
         return redirect(url_for('views.store_home'))
