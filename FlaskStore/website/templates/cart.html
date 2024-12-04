@@ -47,8 +47,8 @@
                 <div class="card mt-4 bg-base-300 shadow-xl">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0 text-secondary-content">Total</h5>
-                            <h5 class="mb-0" id="cart-total text-secondary-content">${{ "%.2f"|format(cart_items|sum(attribute='price')|float) }}</h5>
+                            <h4 class="card-title text-secondary-content">Total</h4>
+                            <h4 class="card-title text-secondary-content" id="cart-total">${{ "%.2f"|format(cart_items|sum(attribute='price')|float) }}</h4>
                         </div>
                         {% if current_user.is_authenticated %}
                         <div class="text-end mt-3">
@@ -67,7 +67,7 @@
             </div>
         </div>
     {% else %}
-        <div class="text-center">
+        <div class="text-center text-secondary-content">
             <h4>Your cart is empty</h4>
             <a href="{{ url_for('views.store_home') }}" class="btn btn-primary mt-3">Continue Shopping</a>
         </div>

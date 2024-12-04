@@ -3,6 +3,7 @@ from sqlalchemy.sql import func
 from flask_login import UserMixin
 from enum import Enum
 from sqlalchemy import Enum as SQLAlchemyEnum
+from datetime import datetime
 
 ## Some of the classes need editing
 
@@ -14,7 +15,7 @@ class User(db.Model, UserMixin):
     first_name = db.Column(db.String(40), nullable=False)
     last_name = db.Column(db.String(40), nullable=False)
     pass_hash = db.Column(db.String(200), nullable=False)
-    created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
+    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
     def get_id(self):
         return str(self.user_id)  # Flask-Login requires this to return a string
 
@@ -43,7 +44,8 @@ class Cart(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
     session_id = db.Column(db.String(100))
     quantity = db.Column(db.Integer, nullable=False)
-    added_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
+    added_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
+    is_locked = db.Column(db.Boolean, nullable=False, default=False)
 
 class Category(db.Model):
     __tablename__ = 'category'
@@ -65,11 +67,11 @@ class Payment(db.Model):
     __tablename__ = 'payment'
     payment_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
-    payment_type = db.Column(db.String(10), nullable=False)
+    payment_type = db.Column(db.String(10), nullable=False, default='credit')
     card_last_four = db.Column(db.String(4), nullable=False)
     aes_card_num = db.Column(db.String(300), nullable=False) # string of bits that needs to be converted into bytes and then decrypted
     expiration = db.Column(db.String(5), nullable=False)
-    is_default = db.Column(db.Boolean, nullable=False)
+    is_default = db.Column(db.Boolean, nullable=False, default=False)
     card_brand = db.Column(db.String(40), nullable=False)
 
 class Rating(db.Model):
@@ -78,7 +80,7 @@ class Rating(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
     stars = db.Column(db.Integer, nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'), nullable=False)
-    rating_date = db.Column(db.DateTime(timezone=True), server_default=func.now())
+    rating_date = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
 
 class Order(db.Model):
     __tablename__ = 'customer_order'
@@ -86,7 +88,7 @@ class Order(db.Model):
     order_number = db.Column(db.String(20), unique=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
     address_id = db.Column(db.Integer, db.ForeignKey('address.address_id'), nullable=False)
-    order_date = db.Column(db.DateTime(timezone=True), server_default=func.now())
+    order_date = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
     status = db.Column(db.String(20), nullable=False, default="pending")
     
     # Relationships
@@ -141,7 +143,7 @@ class Transaction(db.Model):
     payment_id = db.Column(db.Integer, db.ForeignKey('payment.payment_id'), nullable=False)
     billing_address_id = db.Column(db.Integer, db.ForeignKey('address.address_id'), nullable=False)
     external_transaction_id = db.Column(db.String(100), nullable=False)
-    transaction_time = db.Column(db.DateTime(timezone=True), server_default=func.now())
+    transaction_time = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
     amount = db.Column(db.Float, nullable=False)  # Amount processed in this transaction
 
     # Relationships
