@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, flash, jsonify, url_for, redirect
 from .queries import select_products, add_to_cart, get_cart_count, get_cart_items, delete_from_cart,\
-set_all_product_ratings, get_addresses, get_payments, create_order_transaction
+set_all_product_ratings, get_addresses, get_payments, create_order_transaction, search_products
 from flask_login import login_required, current_user
 
 views = Blueprint('views', __name__)
@@ -33,7 +33,24 @@ def store_home():
 
 @views.route('/search', methods=['GET', "POST"])
 def search():
-    pass
+    search_term = request.args.get('q', '').strip()
+    sort_by = request.args.get('sort_by', 'default')
+    sort_order = request.args.get('sort_order', 'asc')
+    products = []
+
+    if search_term:
+        try:
+            results = search_products(search_term, sort_by, sort_order)
+            print(f"Search results: {results}")  # Debug log for results
+            for result in results:
+                product = result[0]
+                product.category_id = result[1]
+                product.category_name = result[2]
+                products.append(product)
+        except Exception as e:
+            print(f"Error in search: {str(e)}")
+
+    return render_template("products.html", products=products, search_term=search_term)
 
 @views.route('/cart')
 def cart():
