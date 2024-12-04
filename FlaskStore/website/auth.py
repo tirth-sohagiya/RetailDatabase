@@ -70,7 +70,9 @@ def create_account():
 
 @auth.route('/profile')
 def profile():
-    return render_template("profile.html", current_user=current_user)
+    order_count = len(get_order_history(current_user.id))
+    member_since = current_user.created_at.year
+    return render_template("profile.html", current_user=current_user, order_count=order_count, member_since=member_since)
 
 @auth.route('/account/settings', methods=['GET', 'POST'])
 @login_required

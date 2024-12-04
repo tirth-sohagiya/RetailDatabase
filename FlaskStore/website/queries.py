@@ -2,7 +2,7 @@
 from . import db
 from .models import User, Product, Cart, Category, Transaction, Rating, Address, Order, Payment, OrderItem
 from sqlalchemy import func 
-from flask import session # Using this to help track guest carts
+from flask import session, flash # Using this to help track guest carts
 import uuid # create unique guest ids
 from functools import lru_cache
 import time
@@ -80,10 +80,52 @@ def get_session_id():
         session['cart_session_id'] = new_session_id
     return session['cart_session_id']
 
+def lock_cart(user_id):
+    """Lock all cart items for a user during transaction processing"""
+    try:
+        print(f"Starting cart lock for user {user_id}")
+        cart_items = db.session.query(Cart).filter_by(user_id=user_id)\
+            .with_for_update().all()
+        print(f"Found {len(cart_items)} items")
+        
+        for item in cart_items:
+            print(f"Locking cart_id: {item.cart_id}, product_id: {item.product_id}")
+            item.is_locked = True
+        
+        print("All items locked successfully")
+        db.session.commit()
+        return True
+            
+    except Exception as e:
+        import traceback
+        print(f"Error locking cart: {str(e)}")
+        print("Full traceback:")
+        print(traceback.format_exc())
+        return False
+
+def unlock_cart(user_id):
+    """Unlock all cart items for a user after transaction processing"""
+    try:
+        cart_items = db.session.query(Cart).filter_by(user_id=user_id)\
+            .with_for_update().all()
+        for item in cart_items:
+            item.is_locked = False
+        db.session.flush()
+        return True
+    except Exception as e:
+        print(f"Error unlocking cart: {str(e)}")
+        return False
+
 def add_to_cart(user_id, product_id, quantity=1):
     """Add an item to cart. If user is logged in, use user_id, else use session"""
+
+    # checking if cart is locked by a purchase
+    if check_cart_lock(user_id):
+        flash('Cart is currently locked for checkout processing: add_to_cart', category='error')
+        return
+
     if quantity <= 0:
-        raise ValueError("Quantity must be greater than 0")
+        raise ValueError("Items is out of stock")
     if user_id:  # Logged in user
         cart_item = Cart.query.filter_by(user_id=user_id, product_id=product_id, session_id=None).first()
     else:  # Guest user
@@ -103,6 +145,9 @@ def add_to_cart(user_id, product_id, quantity=1):
     db.session.commit()
 
 def get_cart_count(user_id=None):
+    if check_cart_lock(user_id):
+        flash('Cart is currently locked for checkout processing: get_cart_count', category='error')
+        return
     """Get number of items in cart"""
     if user_id:  # Logged in user
         result = db.session.query(func.sum(Cart.quantity))\
@@ -144,6 +189,9 @@ def transfer_cart_login(user_id):
         db.session.commit()
 
 def clear_cart(user_id=None):
+    if check_cart_lock(user_id):
+        flash('Cart is currently locked for checkout processing: clear_cart', category='error')
+        return
     if user_id:
          db.session.query(Cart).filter_by(user_id = user_id).delete()
     else:
@@ -151,6 +199,11 @@ def clear_cart(user_id=None):
     db.session.commit()
 
 def delete_from_cart(product_id, user_id=None):
+    if check_cart_lock(user_id):
+        flash('Cart is currently locked for checkout processing: delete_from_cart', category='error')
+        return
+    """ deletes product from cart, removes all quantity
+        we currently don't allow users to update the quantity of an item in the cart"""
     print("In delete_from_cart. user_id:", user_id, "product_id:", product_id)
     if user_id:
         print("In user_id")
@@ -162,7 +215,6 @@ def delete_from_cart(product_id, user_id=None):
 
 # Using instead of a database trigger to batch update all product ratings
 def set_all_product_ratings():
-    # Select all product_ids
     product_ids = db.session.query(Product.product_id).all()
     for product in product_ids:
         rating = db.session.query(func.avg(Rating.stars)).filter_by(product_id=product.product_id).scalar()
@@ -178,32 +230,80 @@ def get_order_history(user_id):
         .all()
     return orders
 
-# creates the order, order_item, and transaction records for the order at checkout
+# 
 def create_order_transaction(user_id, payment_id, billing_address_id, shipping_address_id):
-    order = Order(user_id=user_id, address_id = shipping_address_id)
-    db.session.add(order)
-    db.session.commit()
-    # ToDo: create order number
-    transaction = Transaction(order_id = order.order_id, payment_id = payment_id, billing_address_id = billing_address_id, amount = 0.00)
-    # ToDo: create external transaction id
+    """ creates the order, order_item, and transaction records for the order at checkout
+        if the order is successfully created, it will return True"""
 
-    # need to lock cart table here, we can't allow users to add items to the cart while an order is being created
-    # pulling in all items from user's cart and adding them to the order
-    cart_items = get_cart_items(user_id)
-    for item in cart_items:
-        order_item = OrderItem(order_id = order.order_id, product_id = item[4], quantity = item[3], unit_price = item[1])
-        print("price:", order_item.unit_price)
-        print("quantity:", order_item.quantity)
-        db.session.add(order_item)
-        transaction.amount += order_item.unit_price * order_item.quantity
-    # unlock cart table here
-    # after the order items are added, clear the cart
-    clear_cart(user_id)
-    print("transaction:", transaction)
-    print("order:", order)
-    # commiting changes to the database
-    db.session.add(transaction)
-    db.session.commit()
+    # Lock the cart
+    lock = lock_cart(user_id)
+    print("lock:", lock)
+    if not lock:
+        flash('Unable to process order at this time', category='error')
+        return False
+
+    try:
+        with db.session.begin():
+            # Get cart items and lock the corresponding product rows
+            cart_items = get_cart_items(user_id)
+            if not cart_items:
+                unlock_cart(user_id)
+                flash('Your cart is empty', category='error')
+                return False
+
+            product_updates = {}  # Store updates to apply after validation
+            
+            # First pass: validate all quantities
+            for item in cart_items:
+                # Lock and get latest product data
+                product = db.session.query(Product).filter_by(product_id=item.product_id)\
+                    .with_for_update().first()
+                
+                # Check if enough stock
+                if product.stock_quantity < item.quantity:
+                    unlock_cart(user_id)
+                    flash(f'Sorry, {product.name} only has {product.stock_quantity} items in stock', category='error')
+                    return False
+                
+                # Store the update for later
+                product_updates[product] = item.quantity
+            
+            # Second pass: apply all updates
+            for product, quantity in product_updates.items():
+                product.stock_quantity -= quantity
+            
+            # Create order and process transaction
+            order = Order(user_id=user_id, address_id = shipping_address_id)
+            db.session.add(order)
+            db.session.flush()
+            transaction = Transaction(order_id = order.order_id, payment_id = payment_id, billing_address_id = billing_address_id, amount = 0.00)
+
+            # need to lock cart table here, we can't allow users to add items to the cart while an order is being created
+            # pulling in all items from user's cart and adding them to the order
+            cart_items = get_cart_items(user_id)
+            for item in cart_items:
+                order_item = OrderItem(order_id = order.order_id, product_id = item[4], quantity = item[3], unit_price = item[1])
+                print("price:", order_item.unit_price)
+                print("quantity:", order_item.quantity)
+                db.session.add(order_item)
+                transaction.amount += order_item.unit_price * order_item.quantity
+            print("transaction:", transaction)
+            print("order:", order)
+            # add transaction
+            db.session.add(transaction)
+            
+            # Clear cart and add transaction
+            unlock_cart(user_id)
+            clear_cart(user_id)  # This will also remove the locks
+            
+            return True
+                
+    except Exception as e:
+        db.session.rollback()
+        unlock_cart(user_id)  # Make sure to unlock on error
+        raise e  # Re-raise to be caught by outer try-except
+    
+
 def search_products(search_term, sort_by='default', sort_order='asc'):
     """
     Search for products by name, description, or category.
@@ -240,3 +340,14 @@ def search_products(search_term, sort_by='default', sort_order='asc'):
     except Exception as e:
         print(f"Error in search_products: {str(e)}")
         return []
+
+def check_cart_lock(user_id):
+    """ returns true if cart is locked, false otherwise """
+    try:
+        locked_items = db.session.query(Cart).filter_by(user_id=user_id, is_locked=True).first()
+        if locked_items:
+            return True
+        return False
+    except Exception as e:
+        print(f"Error checking cart lock: {str(e)}")
+        return False

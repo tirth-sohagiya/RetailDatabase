@@ -23,22 +23,18 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div class="stat bg-base-200 rounded-box">
                         <div class="stat-title">Member Since</div>
-                        <div class="stat-value text-primary">2023</div>
+                        <div class="stat-value text-primary">{{current_user.created_at.year}}</div>
                     </div>
                     <div class="stat bg-base-200 rounded-box">
                         <div class="stat-title">Orders</div>
-                        <div class="stat-value text-primary">0</div>
+                        <div class="stat-value text-primary">{{order_count}}</div>
                     </div>
                 </div>
 
                 <!-- Actions -->
                 <div class="divider"></div>
                 <div class="flex flex-col space-y-2">
-                    <a href="/cart" class="btn btn-primary">
-                        <i class="bi bi-cart-fill mr-2"></i>
-                        View Cart
-                    </a>
-                    <a href="{{ url_for('auth.account_settings') }}" class="btn btn-outline">
+                    <a href="{{ url_for('auth.account_settings') }}" class="btn btn-primary">
                         <i class="bi bi-gear-fill mr-2"></i>
                         Account Settings
                     </a>

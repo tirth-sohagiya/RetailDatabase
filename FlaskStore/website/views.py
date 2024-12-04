@@ -145,7 +145,7 @@ def checkout():
 
         # If the user submitted a new payment method during checkout, add it to the database
         if payment_id == 'new':
-            new_payment = Payment(user_id=current_user.id, card_number=request.form.get('card_number'), exp_date=request.form.get('exp_date'), cvv=request.form.get('cvv'))
+            new_payment = Payment(user_id=current_user.id, aes_card_num=request.form.get('card_number'), expiration=request.form.get('exp_date'), card_last_four=request.form.get('card_number')[-4:], card_brand=request.form.get('card_brand'))
             db.session.add(new_payment)
             db.session.commit()
             payment_id = new_payment.payment_id
