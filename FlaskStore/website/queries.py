@@ -136,6 +136,13 @@ def transfer_cart_signup(user_id):
     db.session.query(Cart).filter_by(session_id=get_session_id()).update({"user_id": user_id})
     db.session.commit()
 
+def transfer_cart_login(user_id):
+    """Transfer user cart to guest cart on login"""
+    # Only transfer if the user has no current cart
+    if db.session.query(Cart).filter_by(user_id=user_id).first() == None:
+        db.session.query(Cart).filter_by(user_id=user_id).update({"session_id": get_session_id()})
+        db.session.commit()
+
 def clear_cart(user_id=None):
     if user_id:
          db.session.query(Cart).filter_by(user_id = user_id).delete()
@@ -189,3 +196,40 @@ def create_order_transaction(user_id, payment_id, billing_address_id, shipping_a
     db.session.add(transaction)
     db.session.add(order)
     db.session.commit()
+
+def search_products(search_term, sort_by='default', sort_order='asc'):
+    """
+    Search for products by name, description, or category.
+    Only include products with a valid name, description, and image path.
+    """
+    try:
+        query = Product.query.with_entities(
+            Product,
+            Category.category_id,
+            Category.category_name.label('category_name')
+        ).join(Category, Product.category_id == Category.category_id)\
+        .filter(
+            (Product.name.isnot(None)) & 
+            (Product.name != '') & 
+            (Product.description.isnot(None)) & 
+            (Product.description != '') &
+            (Product.img_path.isnot(None)) &  # Ensure img_path is not null
+            (Product.img_path != '') &  # Ensure img_path is not empty
+            (
+                (Product.name.ilike(f'%{search_term}%')) |
+                (Product.description.ilike(f'%{search_term}%')) |
+                (Category.category_name.ilike(f'%{search_term}%'))
+            )
+        ).options(db.joinedload(Product.category))
+
+        # Apply sorting
+        if sort_by == 'price':
+            query = query.order_by(Product.price.desc() if sort_order == 'desc' else Product.price)
+        elif sort_by == 'rating':
+            query = query.order_by(Product.rating.desc() if sort_order == 'desc' else Product.rating)
+
+        return query.all()
+
+    except Exception as e:
+        print(f"Error in search_products: {str(e)}")
+        return []

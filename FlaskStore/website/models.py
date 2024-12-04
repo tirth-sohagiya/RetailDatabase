@@ -142,7 +142,7 @@ class Transaction(db.Model):
     billing_address_id = db.Column(db.Integer, db.ForeignKey('address.address_id'), nullable=False)
     external_transaction_id = db.Column(db.String(100), nullable=False)
     transaction_time = db.Column(db.DateTime(timezone=True), server_default=func.now())
-    amount = db.Column(db.Float, nullable=False, default=0.00)  # Amount processed in this transaction
+    amount = db.Column(db.Float, nullable=False)  # Amount processed in this transaction
 
     # Relationships
     payment = db.relationship('Payment', backref='transactions', lazy=True)
