@@ -3,7 +3,7 @@ from .models import User, Address, Payment
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db, login_manager
 from flask_login import login_manager, login_user, login_required, logout_user, current_user
-from .queries import get_password, get_order_history
+from .queries import get_password, get_order_history, transfer_cart_login, transfer_cart_signup
 
 
 auth = Blueprint('auth', __name__)
@@ -63,6 +63,8 @@ def create_account():
             db.session.add(new_user)
             db.session.commit()
             login_user(new_user, remember=True)
+            transfer_cart_signup(new_user.user_id)
+            flash('Account created!', category='success')
             return redirect(url_for('views.store_home'))
     return render_template("create_account.html")
 

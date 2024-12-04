@@ -136,6 +136,13 @@ def transfer_cart_signup(user_id):
     db.session.query(Cart).filter_by(session_id=get_session_id()).update({"user_id": user_id})
     db.session.commit()
 
+def transfer_cart_login(user_id):
+    """Transfer user cart to guest cart on login"""
+    # Only transfer if the user has no current cart
+    if db.session.query(Cart).filter_by(user_id=user_id).first() == None:
+        db.session.query(Cart).filter_by(user_id=user_id).update({"session_id": get_session_id()})
+        db.session.commit()
+
 def clear_cart(user_id=None):
     if user_id:
          db.session.query(Cart).filter_by(user_id = user_id).delete()

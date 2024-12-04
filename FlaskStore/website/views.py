@@ -2,6 +2,8 @@ from flask import Blueprint, render_template, request, flash, jsonify, url_for, 
 from .queries import select_products, add_to_cart, get_cart_count, get_cart_items, delete_from_cart,\
 set_all_product_ratings, get_addresses, get_payments, create_order_transaction, search_products
 from flask_login import login_required, current_user
+from .models import Address, Payment
+from . import db
 
 views = Blueprint('views', __name__)
 
@@ -132,20 +134,31 @@ def checkout():
         payment_id = request.form.get('payment_id')
         billing_address_id = request.form.get('billing_address_id')
         shipping_address_id = request.form.get('shipping_address_id')
+        print("shipping_address_id:", shipping_address_id)
 
-        if shipping_address_id is 'new':
+        if shipping_address_id == 'new':
             # add address to the database
+            new_address = Address(user_id=current_user.id, street_address=request.form.get('street_address'), city=request.form.get('city'), state=request.form.get('state'), zip=request.form.get('zip_code'))
+            print(new_address.address_id)
+            db.session.add(new_address)
+            db.session.commit()
             # get generated address id from database
-            pass
+            shipping_address_id = new_address.address_id
+
         
-        if payment_id is 'new':
+        if payment_id == 'new':
             # add payment method to the database
             # get generated payment id from database
             pass
 
         # If we received no billing address ID, we assume it's the same as shipping
-        if billing_address_id is None:
+        # if the billing address is a new address, we need to add it to the database
+        if billing_address_id ==None:
             billing_address_id = shipping_address_id
+        elif billing_address_id == 'new':
+            # add billing address to the database
+            # get generated billing address id from database
+            pass
 
         # print("Payment ID:", payment_id)
         # print("Billing Address ID:", billing_address_id)
