@@ -20,6 +20,30 @@ def get_payments(user_id):
     # Get all payments for a user
     return Payment.query.filter_by(user_id=user_id).all()
 
+def insert_address(address):
+    # check if address already exists
+    existing_address = Address.query.filter_by(street_address=address.street_address, city=address.city, state=address.state, zip=address.zip).first()
+    if existing_address:
+        return False
+    if address.is_default:
+            # Set all other addresses to non-default
+            Address.query.filter_by(user_id=current_user.user_id, is_default=True).update({'is_default': False})
+    db.session.add(address)
+    db.session.commit()
+    return True
+
+def insert_payment(payment):
+    # check if payment already exists
+    existing_payment = Payment.query.filter_by(aes_card_num=payment.aes_card_num).first()
+    if existing_payment:
+        return False
+    if payment.is_default:
+        # Set all other payment methods to non-default
+        Payment.query.filter_by(user_id=payment.user_id, is_default=True).update({'is_default': False})
+    db.session.add(payment)
+    db.session.commit()
+    return True
+
 @lru_cache(maxsize=32)
 def select_products(category, num, sort_by='default', sort_order='asc'):
     start = time.time()
