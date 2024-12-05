@@ -3,7 +3,7 @@ from .models import User, Address, Payment
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db, login_manager
 from flask_login import login_manager, login_user, login_required, logout_user, current_user
-from .queries import get_password, get_order_history, transfer_cart_login, transfer_cart_signup
+from .queries import get_password, get_order_history, transfer_cart_login, transfer_cart_signup, insert_address, insert_payment
 
 
 auth = Blueprint('auth', __name__)
@@ -115,51 +115,43 @@ def account_settings():
                 
         elif action == 'add_address':
             # Add new address
-            street = request.form.get('street')
-            city = request.form.get('city')
-            state = request.form.get('state')
-            zip_code = request.form.get('zip_code')
-            is_default = bool(request.form.get('is_default'))
-            
-            if is_default:
-                # Set all other addresses to non-default
-                Address.query.filter_by(user_id=current_user.user_id, is_default=True).update({'is_default': False})
-            
             new_address = Address(
                 user_id=current_user.user_id,
-                street_address=street,
-                city=city,
-                state=state,
-                zip=zip_code,
-                is_default=is_default
+                street_address=request.form.get('street'),
+                city=request.form.get('city'),
+                state=request.form.get('state'),
+                zip=request.form.get('zip_code'),
+                is_default=bool(request.form.get('is_default'))
             )
-            db.session.add(new_address)
-            db.session.commit()
+            if not insert_address(new_address):
+                flash('Address already exists.', category='error')
             flash('Address added successfully!', category='success')
             
         elif action == 'add_payment':
-            # Add new payment method
-            card_number = request.form.get('card_number')
-            expiration = request.form.get('expiration')
-            card_brand = request.form.get('card_brand')
-            is_default = bool(request.form.get('is_default'))
-            
-            if is_default:
-                # Set all other payment methods to non-default
-                Payment.query.filter_by(user_id=current_user.user_id, is_default=True).update({'is_default': False})
-            
             new_payment = Payment(
                 user_id=current_user.user_id,
                 payment_type='credit',
-                card_last_four=card_number[-4:],
-                aes_card_num=card_number,  # In reality, this should be encrypted
-                expiration=expiration,
-                is_default=is_default,
-                card_brand=card_brand
+                card_last_four=request.form.get('card_number')[-4:],
+                aes_card_num=request.form.get('card_number'),  # In reality, this should be encrypted
+                expiration=request.form.get('expiration'),
+                is_default=bool(request.form.get('is_default')),
+                card_brand=request.form.get('card_brand')
             )
-            db.session.add(new_payment)
-            db.session.commit()
+            if not insert_payment(new_payment):
+                flash('Payment method already exists.', category='error')
             flash('Payment method added successfully!', category='success')
+        
+        elif action == 'delete_address':
+            address_id = request.form.get('address_id')
+            Address.query.filter_by(address_id=address_id).delete()
+            db.session.commit()
+            flash('Address deleted successfully!', category='success')
+            
+        elif action == 'delete_payment':
+            payment_id = request.form.get('payment_id')
+            Payment.query.filter_by(payment_id=payment_id).delete()
+            db.session.commit()
+            flash('Payment method deleted successfully!', category='success')
             
     # Get user's addresses and payment methods for display, should refactor to put queries in queries.py
     addresses = Address.query.filter_by(user_id=current_user.user_id).all()
