@@ -77,7 +77,6 @@ The `website/fake_data/` directory contains scripts and data used to populate th
 
 - Password hashing using Werkzeug
 - Session management
-- CSRF protection
 - Cart locking mechanism
 - Secure payment info storage
 

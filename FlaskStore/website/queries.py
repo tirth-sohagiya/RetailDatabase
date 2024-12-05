@@ -66,10 +66,6 @@ def select_products(category, num, sort_by='default', sort_order='asc'):
     print(query.limit(num).all())
     return query.limit(num).all()
 
-def search_products(search_term):
-    # Search for products by name or description
-    pass
-
 def update_product_image_paths():
     """Update all product image paths to include category name as parent directory"""
     try:
@@ -90,7 +86,6 @@ def update_product_image_paths():
         return True
     except Exception as e:
         print(f"Error updating product image paths: {str(e)}")
-        db.session.rollback()
         return False
 
 def get_session_id():
@@ -107,24 +102,17 @@ def get_session_id():
 def lock_cart(user_id):
     """Lock all cart items for a user during transaction processing"""
     try:
-        print(f"Starting cart lock for user {user_id}")
         cart_items = db.session.query(Cart).filter_by(user_id=user_id)\
             .with_for_update().all()
-        print(f"Found {len(cart_items)} items")
         
         for item in cart_items:
-            print(f"Locking cart_id: {item.cart_id}, product_id: {item.product_id}")
             item.is_locked = True
         
-        print("All items locked successfully")
         db.session.commit()
         return True
             
     except Exception as e:
-        import traceback
         print(f"Error locking cart: {str(e)}")
-        print("Full traceback:")
-        print(traceback.format_exc())
         return False
 
 def unlock_cart(user_id):
@@ -196,7 +184,6 @@ def get_cart_items(user_id=None):
     else:  # Guest user
         session_id = get_session_id()
         query = query.filter(Cart.session_id == session_id, Cart.user_id == None)
-    print(query.all())
     return query.all()
 
 def transfer_cart_signup(user_id):
@@ -230,10 +217,8 @@ def delete_from_cart(product_id, user_id=None):
         we currently don't allow users to update the quantity of an item in the cart"""
     print("In delete_from_cart. user_id:", user_id, "product_id:", product_id)
     if user_id:
-        print("In user_id")
         db.session.query(Cart).filter_by(user_id=user_id, product_id=product_id).delete()
     else:
-        print("In product_id")
         db.session.query(Cart).filter_by(session_id=get_session_id(), product_id=product_id).delete()
     db.session.commit()
 
@@ -326,7 +311,17 @@ def create_order_transaction(user_id, payment_id, billing_address_id, shipping_a
         db.session.rollback()
         unlock_cart(user_id)  # Make sure to unlock on error
         raise e  # Re-raise to be caught by outer try-except
-    
+
+def check_cart_lock(user_id):
+    """ returns true if cart is locked, false otherwise """
+    try:
+        locked_items = db.session.query(Cart).filter_by(user_id=user_id, is_locked=True).first()
+        if locked_items:
+            return True
+        return False
+    except Exception as e:
+        print(f"Error checking cart lock: {str(e)}")
+        return False
 
 def search_products(search_term, sort_by='default', sort_order='asc'):
     """
@@ -364,14 +359,3 @@ def search_products(search_term, sort_by='default', sort_order='asc'):
     except Exception as e:
         print(f"Error in search_products: {str(e)}")
         return []
-
-def check_cart_lock(user_id):
-    """ returns true if cart is locked, false otherwise """
-    try:
-        locked_items = db.session.query(Cart).filter_by(user_id=user_id, is_locked=True).first()
-        if locked_items:
-            return True
-        return False
-    except Exception as e:
-        print(f"Error checking cart lock: {str(e)}")
-        return False
