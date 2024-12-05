@@ -22,7 +22,7 @@ def get_payments(user_id):
 
 def insert_address(address):
     # check if address already exists
-    existing_address = Address.query.filter_by(street_address=address.street_address, city=address.city, state=address.state, zip=address.zip).first()
+    existing_address = Address.query.filter_by(street_address=address.street_address, city=address.city, state=address.state, zip=address.zip, user_id=address.user_id).first()
     if existing_address:
         return False
     if address.is_default:
@@ -34,7 +34,7 @@ def insert_address(address):
 
 def insert_payment(payment):
     # check if payment already exists
-    existing_payment = Payment.query.filter_by(aes_card_num=payment.aes_card_num).first()
+    existing_payment = Payment.query.filter_by(aes_card_num=payment.aes_card_num, user_id=payment.user_id).first()
     if existing_payment:
         return False
     if payment.is_default:
@@ -180,7 +180,7 @@ def get_cart_items(user_id=None):
     ).join(Cart, Cart.product_id == Product.product_id)
 
     if user_id:  # Logged in user
-        query = query.filter(Cart.user_id == user_id, Cart.session_id == None)
+        query = query.filter(Cart.user_id == user_id)
     else:  # Guest user
         session_id = get_session_id()
         query = query.filter(Cart.session_id == session_id, Cart.user_id == None)
