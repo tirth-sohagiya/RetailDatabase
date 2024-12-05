@@ -1,83 +1,91 @@
+# Flask E-commerce Store
 
-# Flask Retail Store Application
+## How to Use
 
-This is a Flask-based web application for a retail store with user authentication and shopping cart functionality.
+1. Clone the repository
+2. Install dependencies: `pip install -r requirements.txt`
+3. Run the application: `python main.py`
+4. Access the store at: `http://localhost:5000`
 
 ## Project Structure
 
-The application is organized into several Python modules, each with specific responsibilities:
+### Core Files
 
-### 1. [__init__.py](https://github.com/lucas-peters/RetailDatabase/blob/main/FlaskStore/website/__init__.py)
-Main application configuration and initialization:
-- [create_app()](https://github.com/lucas-peters/RetailDatabase/blob/main/FlaskStore/website/__init__.py#L16): Creates and configures the Flask application
-  - Initializes SQLAlchemy database connection
-  - Sets up Flask-Login for user authentication
-  - Registers blueprints for views and authentication
+- `__init__.py`: Application factory that initializes Flask app, database, and login manager. Sets up blueprints and configurations.
 
-### 2. [models.py](https://github.com/lucas-peters/RetailDatabase/blob/main/FlaskStore/website/models.py)
-Database models using SQLAlchemy:
-- `User`: User model for authentication
-  - `get_id()`: Returns user ID for Flask-Login
-  - `id`: Property for Flask-Login compatibility
-- `Product`: Product model for store items
-  - `get_id()`: Returns product ID
-- `Cart`: Shopping cart model
-  - Stores user's selected items
+- `models.py`: Defines SQLAlchemy database models including:
+  - User: Customer account information
+  - Product: Store inventory items
+  - Cart: Shopping cart implementation with locking mechanism
+  - Order/OrderItem: Order processing
+  - Transaction: Payment processing
+  - Address/Payment: Customer shipping and payment information
 
-### 3. [views.py](https://github.com/lucas-peters/RetailDatabase/blob/main/FlaskStore/website/views.py)
-Main application routes and views:
-- [home()](https://github.com/lucas-peters/RetailDatabase/blob/main/FlaskStore/website/views.py#L8): Renders the homepage
-- [product_route()](https://github.com/lucas-peters/RetailDatabase/blob/main/FlaskStore/website/views.py#L12): Displays product listings
-- [add_to_cart_route()](https://github.com/lucas-peters/RetailDatabase/blob/main/FlaskStore/website/views.py#L21): Handles adding items to cart
-  - Accepts POST requests with product ID and quantity
-  - Supports both authenticated and guest users
-- [cart()](https://github.com/lucas-peters/RetailDatabase/blob/main/FlaskStore/website/views.py#L41): Displays the user's shopping cart
+- `queries.py`: Contains all database operations and business logic:
+  - Cart management (add, remove, clear)
+  - Product operations (search, filter, sort)
+  - Transaction processing
+  - Cart locking mechanism for concurrent access
+  - Address and payment method management
 
-### 4. [auth.py](https://github.com/lucas-peters/RetailDatabase/blob/main/FlaskStore/website/auth.py)
-Authentication-related routes and functions:
-- [login()](https://github.com/lucas-peters/RetailDatabase/blob/main/FlaskStore/website/auth.py#L11): Handles user login
-  - Validates credentials
-  - Creates user session
-- [logout()](https://github.com/lucas-peters/RetailDatabase/blob/main/FlaskStore/website/auth.py#L24): Handles user logout
-- [create_account()](https://github.com/lucas-peters/RetailDatabase/blob/main/FlaskStore/website/auth.py#L28): New user registration
-  - Validates user input
-  - Creates new user accounts
-  - Implements password hashing
+- `views.py`: Main route handlers for store functionality:
+  - Store homepage and product browsing
+  - Shopping cart operations
+  - Checkout process
+  - Product search and filtering
 
-### 5. [test.py](https://github.com/lucas-peters/RetailDatabase/blob/main/FlaskStore/test.py)
-Database testing and setup:
-- Contains database connection testing
-- Creates initial database schema
-- Includes test data insertion
+- `auth.py`: Authentication-related routes and logic:
+  - User registration
+  - Login/logout
+  - Account settings
+  - Address/payment management
+  - Order history
 
-## Database Configuration
+### Data Generation
 
-The application uses MySQL with AWS RDS:
-- Host: aws.cjwc228ggyr7.us-west-1.rds.amazonaws.com
-- Database: flasktest
-- Connection managed through SQLAlchemy ORM
+The `website/fake_data/` directory contains scripts and data used to populate the database with test data:
+- Product information
+- User accounts
+- Test passwords
+- Sample transactions
+
+## Key Features
+
+1. **Secure Shopping Cart**
+   - Cart locking mechanism prevents concurrent modifications during checkout
+   - Session-based cart for guest users
+   - Cart transfer upon user login
+
+2. **Transaction Processing**
+   - Atomic database operations
+   - Inventory management
+   - Order tracking
+
+3. **User Management**
+   - Secure password hashing
+   - Address book
+   - Payment method storage
+   - Order history
+
+4. **Product Management**
+   - Search functionality
+   - Category filtering
+   - Sort options
+   - Stock tracking
 
 ## Security Features
 
-- Password hashing using Werkzeug security
-- Flask-Login for session management
-- CSRF protection through Flask-WTF
-- Secure password validation rules
+- Password hashing using Werkzeug
+- Session management
+- CSRF protection
+- Cart locking mechanism
+- Secure payment info storage
 
-## Routes
+## Database Design
 
-- `/`: Homepage
-- `/login`: User login
-- `/logout`: User logout
-- `/create_account`: New user registration
-- `/products`: Product listing
-- `/cart`: Shopping cart
-- `/add-to-cart`: Cart manipulation (POST)
-
-## Dependencies
-
-- Flask
-- Flask-SQLAlchemy
-- Flask-Login
-- PyMySQL
-- Werkzeug
+The application uses SQLAlchemy ORM with the following key relationships:
+- User -> Orders (one-to-many)
+- Order -> OrderItems (one-to-many)
+- Order -> Transaction (one-to-one)
+- User -> Addresses (one-to-many)
+- User -> Payments (one-to-many)
